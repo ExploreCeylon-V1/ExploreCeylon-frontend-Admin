@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ChevronDown, Search, Plus, Edit2, Trash2, Check, X, MapPin, Clock, Star } from "lucide-react";
+import { ChevronDown, Search, Plus, Edit2, Trash2, Check, X, MapPin, Clock, Star, UploadCloud, Loader2 } from "lucide-react";
 import * as hiddenGemsService from "../services/hiddenGemsService";
+import { uploadService } from "../services/uploadService"; // ⚠️ path එක oyaage folder structure එකට ගැලපෙන්න check කරන්න
 
 const DEFAULT_FORM = {
   title: "", description: "", district: "", category: "BEACH",
   latitude: "", longitude: "", howToGetThere: "", bestTime: "",
-  tips: "", imageUrls: "",
+  tips: "", imageUrls: [], // ✅ FIX: array (backend field name එකට match)
 };
 
 const CATEGORIES = ["BEACH", "WATERFALL", "RUINS", "VIEWPOINT", "VILLAGE", "CAFE", "TEMPLE"];
@@ -61,6 +62,9 @@ export default function AdminHiddenGems() {
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [submitting, setSubmitting] = useState(false);
 
+  // ✅ NEW: gallery image upload state
+  const [uploadingImages, setUploadingImages] = useState(false);
+
   useEffect(() => {
     loadGems();
   }, []);
@@ -93,6 +97,31 @@ export default function AdminHiddenGems() {
     });
   }, [gems, pendingGems, searchTerm, categoryFilter, activeTab]);
 
+  // ✅ NEW: multi image upload handler
+  const handleImagesUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    try {
+      setError(null);
+      setUploadingImages(true);
+      const results = await uploadService.uploadMultiple(files, "gems");
+      const newUrls = results.map((r) => r.imageUrl);
+      setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...newUrls] }));
+    } catch (err) {
+      setError(err?.message || "Image upload failed");
+    } finally {
+      setUploadingImages(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = (urlToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((url) => url !== urlToRemove),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -103,7 +132,7 @@ export default function AdminHiddenGems() {
         latitude: parseFloat(formData.latitude) || 0, longitude: parseFloat(formData.longitude) || 0,
         howToGetThere: formData.howToGetThere, bestTime: formData.bestTime,
         tips: formData.tips,
-        imageUrls: formData.imageUrls.split(",").map((u) => u.trim()).filter(Boolean),
+        imageUrls: formData.imageUrls, // ✅ FIX: දැනටමත් array
       };
 
       if (editingId) {
@@ -127,7 +156,7 @@ export default function AdminHiddenGems() {
       district: gem.district || "", category: gem.category || "BEACH",
       latitude: gem.latitude?.toString() || "", longitude: gem.longitude?.toString() || "",
       howToGetThere: gem.howToGetThere || "", bestTime: gem.bestTime || "",
-      tips: gem.tips || "", imageUrls: gem.imageUrls ? gem.imageUrls.join(", ") : "",
+      tips: gem.tips || "", imageUrls: gem.imageUrls || [], // ✅ FIX
     });
     setEditingId(gem.id);
     setShowAddModal(true);
@@ -236,7 +265,11 @@ export default function AdminHiddenGems() {
                 {pendingGems.map((gem) => (
                   <div key={gem.id} className="bg-white rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between shadow-sm border border-amber-100 gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-500 text-lg flex-shrink-0">💎</div>
+                      {gem.imageUrls && gem.imageUrls.length > 0 ? (
+                        <img src={gem.imageUrls[0]} alt={gem.title} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-500 text-lg flex-shrink-0">💎</div>
+                      )}
                       <div>
                         <p className="font-semibold text-slate-900 text-sm">{gem.title}</p>
                         <p className="text-xs text-slate-500">{gem.district} • Created {new Date(gem.createdAt).toLocaleDateString()}</p>
@@ -266,7 +299,7 @@ export default function AdminHiddenGems() {
                 <table className="w-full min-w-[800px]">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      {["Title", "Category", "District", "Rating", "Approval Status", "Created", "Actions"].map((h) => (
+                      {["Image", "Title", "Category", "District", "Rating", "Approval Status", "Created", "Actions"].map((h) => (
                         <th key={h} className="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
@@ -275,8 +308,14 @@ export default function AdminHiddenGems() {
                     {filteredGems.map((gem) => (
                       <tr key={gem.id} className="hover:bg-slate-50 transition">
                         <td className="px-5 py-4">
+                          {gem.imageUrls && gem.imageUrls.length > 0 ? (
+                            <img src={gem.imageUrls[0]} alt={gem.title} className="h-10 w-10 rounded-lg object-cover border border-slate-200" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-sm">🖼️</div>
+                          )}
+                        </td>
+                        <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center text-violet-400 flex-shrink-0">💎</div>
                             <div>
                               <p className="font-semibold text-slate-900 text-sm">{gem.title}</p>
                               <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5"><MapPin size={10} /> {gem.district}</p>
@@ -336,10 +375,54 @@ export default function AdminHiddenGems() {
                 {field("How to Get There", "howToGetThere", { placeholder: "e.g., Boat from Unawatuna (10 min)" })}
               </div>
               {field("Insider Tips", "tips", { placeholder: "e.g., Bring water shoes, go early morning", rows: 2 })}
-              {field("Gallery Image URLs (comma-separated)", "imageUrls", { placeholder: "https://example.com/img1.jpg, https://example.com/img2.jpg", rows: 2 })}
+
+              {/* ✅ FIX: Gallery Image URLs textarea → real file upload (matches destinations/events) */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Gallery Images</label>
+
+                <label className={`flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-slate-300 rounded-lg py-6 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition text-sm ${uploadingImages ? "pointer-events-none opacity-70" : ""}`}>
+                  {uploadingImages ? (
+                    <>
+                      <Loader2 size={20} className="text-emerald-600 animate-spin" />
+                      <span className="text-slate-500">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud size={20} className="text-slate-400" />
+                      <span className="text-slate-500">Click to upload images (multiple allowed — JPG, PNG, WEBP, max 5MB each)</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={handleImagesUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                {formData.imageUrls.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {formData.imageUrls.map((url) => (
+                      <div key={url} className="relative group">
+                        <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover border border-slate-200" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(url)}
+                          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition"
+                          title="Remove"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={closeModal} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition text-sm font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition text-sm font-medium disabled:opacity-60">{submitting ? "Saving…" : editingId ? "Update Gem" : "Create Gem"}</button>
+                <button type="submit" disabled={submitting || uploadingImages} className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition text-sm font-medium disabled:opacity-60">{submitting ? "Saving…" : editingId ? "Update Gem" : "Create Gem"}</button>
               </div>
             </form>
           </div>

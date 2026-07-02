@@ -2,10 +2,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import * as guideService from "../services/guideService";
+import { uploadService } from "../services/uploadService"; // ⚠️ path එක oyaage folder structure එකට ගැලපෙන්න check කරන්න
 
 const specialties = [
   "All Specialties", "Wildlife", "Cultural", "Food", "Photography", "Surfing", "Ayurveda", "Birdwatching", "Trekking",
 ];
+
+const EMPTY_FORM = {
+  fullName: "", bio: "", photoUrl: "", languages: "", specialties: "",
+  district: "", pricePerDay: "", phone: "", email: "", imageUrls: [], // ✅ FIX: imageUrls array
+};
 
 export default function AdminGuides() {
   const navigate = useNavigate();
@@ -44,10 +50,11 @@ export default function AdminGuides() {
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [formSuccess, setFormSuccess] = useState(null);
-  const [formData, setFormData] = useState({
-    fullName: "", bio: "", photoUrl: "", languages: "", specialties: "",
-    district: "", pricePerDay: "", phone: "", email: "", imageUrls: "",
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
+
+  // ✅ NEW: image upload states
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   const mapGuideToCardData = (guide) => ({
     id: guide.id,
@@ -59,6 +66,7 @@ export default function AdminGuides() {
     reviews: guide.reviewCount ?? 0,
     price: guide.pricePerDay,
     available: guide.available ?? true,
+    photoUrl: guide.photoUrl || "", // ✅ NEW
   });
 
   const today = new Date().toISOString().split("T")[0];
@@ -103,9 +111,53 @@ export default function AdminGuides() {
   const handleInputChange = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
 
   const resetForm = () => {
-    setFormData({ fullName: "", bio: "", photoUrl: "", languages: "", specialties: "", district: "", pricePerDay: "", phone: "", email: "", imageUrls: "" });
+    setFormData(EMPTY_FORM);
     setFormError(null);
     setFormSuccess(null);
+  };
+
+  // ✅ NEW: profile photo upload (single)
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      setFormError(null);
+      setUploadingPhoto(true);
+      const res = await uploadService.uploadSingle(file, "guides");
+      setFormData((prev) => ({ ...prev, photoUrl: res.imageUrl }));
+    } catch (err) {
+      setFormError(err?.message || "Photo upload failed");
+    } finally {
+      setUploadingPhoto(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemovePhoto = () => setFormData((prev) => ({ ...prev, photoUrl: "" }));
+
+  // ✅ NEW: gallery images upload (multiple)
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    try {
+      setFormError(null);
+      setUploadingGallery(true);
+      const results = await uploadService.uploadMultiple(files, "guides");
+      const newUrls = results.map((r) => r.imageUrl);
+      setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...newUrls] }));
+    } catch (err) {
+      setFormError(err?.message || "Gallery image upload failed");
+    } finally {
+      setUploadingGallery(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveGalleryImage = (urlToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((url) => url !== urlToRemove),
+    }));
   };
 
   const handleViewGuideDetails = async (guideId) => {
@@ -136,7 +188,7 @@ export default function AdminGuides() {
         fullName: guideData.fullName, bio: guideData.bio || "", photoUrl: guideData.photoUrl || "",
         languages: guideData.languages, specialties: guideData.specialties, district: guideData.district,
         pricePerDay: guideData.pricePerDay.toString(), phone: guideData.phone || "", email: guideData.email || "",
-        imageUrls: guideData.imageUrls?.join("\n") || "",
+        imageUrls: guideData.imageUrls || [], // ✅ FIX: array
       });
       setShowEditModal(true);
     } catch (error) {
@@ -236,7 +288,7 @@ export default function AdminGuides() {
     const payload = {
       ...formData,
       pricePerDay: price,
-      imageUrls: formData.imageUrls.split(/\r?\n|,/).map((url) => url.trim()).filter(Boolean),
+      imageUrls: formData.imageUrls, // ✅ FIX: array එකම යවනවා
     };
 
     setSubmitting(true);
@@ -264,7 +316,7 @@ export default function AdminGuides() {
     const payload = {
       ...formData,
       pricePerDay: price,
-      imageUrls: formData.imageUrls.split(/\r?\n|,/).map((url) => url.trim()).filter(Boolean),
+      imageUrls: formData.imageUrls, // ✅ FIX: array එකම යවනවා
     };
 
     setSubmitting(true);
@@ -374,7 +426,12 @@ export default function AdminGuides() {
                 filteredGuides.map((guide) => (
                   <article key={guide.id} onClick={() => handleViewGuideDetails(guide.id)} className="cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-lg hover:border-emerald-300">
                     <div className="flex flex-col items-center gap-5 text-center">
-                      <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 text-4xl">👤</div>
+                      {/* ✅ FIX: show uploaded profile photo instead of emoji placeholder when available */}
+                      {guide.photoUrl ? (
+                        <img src={guide.photoUrl} alt={guide.name} className="h-24 w-24 rounded-full object-cover border border-slate-200" />
+                      ) : (
+                        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 text-4xl">👤</div>
+                      )}
                       <div>
                         <h2 className="text-xl font-semibold text-slate-950">{guide.name}</h2>
                         <div className="mt-3 flex flex-wrap justify-center gap-2">
@@ -472,12 +529,30 @@ export default function AdminGuides() {
             </div>
             <div className="space-y-6 p-6">
               <div className="flex flex-col items-center gap-4 rounded-3xl bg-emerald-50 p-6 sm:flex-row">
-                <div className="flex h-32 w-32 items-center justify-center rounded-full bg-emerald-200 text-5xl">👤</div>
+                {/* ✅ FIX: show uploaded profile photo instead of emoji placeholder when available */}
+                {selectedGuideDetails.photoUrl ? (
+                  <img src={selectedGuideDetails.photoUrl} alt={selectedGuideDetails.fullName} className="h-32 w-32 rounded-full object-cover border border-emerald-200" />
+                ) : (
+                  <div className="flex h-32 w-32 items-center justify-center rounded-full bg-emerald-200 text-5xl">👤</div>
+                )}
                 <div className="flex-1 text-center sm:text-left">
                   <h3 className="text-2xl font-bold text-slate-950">{selectedGuideDetails.fullName}</h3>
                   <p className="mt-2 text-sm text-slate-600">{selectedGuideDetails.bio}</p>
                 </div>
               </div>
+
+              {/* ✅ NEW: Gallery images in detail view */}
+              {selectedGuideDetails.imageUrls && selectedGuideDetails.imageUrls.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-3">Gallery</p>
+                  <div className="flex flex-wrap gap-3">
+                    {selectedGuideDetails.imageUrls.map((url) => (
+                      <img key={url} src={url} alt="" className="h-20 w-20 rounded-xl object-cover border border-slate-200" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-3xl bg-slate-50 p-4">
                   <p className="text-sm font-semibold text-slate-700">Status</p>
@@ -531,14 +606,55 @@ export default function AdminGuides() {
                   <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Specialties<input type="text" value={formData.specialties} onChange={(e) => handleInputChange("specialties", e.target.value)} placeholder="WILDLIFE,PHOTOGRAPHY" required className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white" /></label>
                   <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Price per day<input type="number" value={formData.pricePerDay} onChange={(e) => handleInputChange("pricePerDay", e.target.value)} min="0" step="0.01" required className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white" /></label>
                   <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Phone<input type="tel" value={formData.phone} onChange={(e) => handleInputChange("phone", e.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white" /></label>
-                  <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600 md:col-span-2">Guide Image URLs<textarea value={formData.imageUrls} onChange={(e) => handleInputChange("imageUrls", e.target.value)} rows={3} placeholder="Comma-separated" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white resize-none" /></label>
+                  <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Email<input type="email" value={formData.email} onChange={(e) => handleInputChange("email", e.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white" /></label>
+
+                  {/* ✅ FIX: Profile Photo — single upload */}
+                  <div className="flex flex-col gap-1.5 text-xs font-semibold text-slate-600 md:col-span-2">
+                    <span>Profile Photo</span>
+                    {formData.photoUrl ? (
+                      <div className="flex items-center gap-3">
+                        <img src={formData.photoUrl} alt="Profile preview" className="h-14 w-14 rounded-full object-cover border border-slate-200" />
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs text-blue-600 hover:text-blue-700 cursor-pointer font-medium normal-case">
+                            Replace photo
+                            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} className="hidden" />
+                          </label>
+                          <button type="button" onClick={handleRemovePhoto} className="text-xs text-red-600 hover:text-red-700 font-medium text-left normal-case">Remove</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <label className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-300 rounded-xl py-4 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition font-normal normal-case ${uploadingPhoto ? "pointer-events-none opacity-70" : ""}`}>
+                        {uploadingPhoto ? <span className="text-slate-500">Uploading...</span> : <span className="text-slate-500">Click to upload profile photo (JPG, PNG, WEBP — max 5MB)</span>}
+                        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} className="hidden" />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* ✅ FIX: Guide Image URLs textarea → real gallery upload */}
+                  <div className="flex flex-col gap-1.5 text-xs font-semibold text-slate-600 md:col-span-2">
+                    <span>Gallery Images</span>
+                    <label className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-300 rounded-xl py-4 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition font-normal normal-case ${uploadingGallery ? "pointer-events-none opacity-70" : ""}`}>
+                      {uploadingGallery ? <span className="text-slate-500">Uploading...</span> : <span className="text-slate-500">Click to upload gallery images (multiple allowed)</span>}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleGalleryUpload} className="hidden" />
+                    </label>
+                    {formData.imageUrls.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {formData.imageUrls.map((url) => (
+                          <div key={url} className="relative group">
+                            <img src={url} alt="" className="h-14 w-14 rounded-lg object-cover border border-slate-200" />
+                            <button type="button" onClick={() => handleRemoveGalleryImage(url)} className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] hover:bg-red-700 transition">✕</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {formError && <p className="mt-4 border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 rounded-xl">{formError}</p>}
               </form>
             </div>
             <div className="flex justify-end gap-3 bg-slate-50 px-6 py-4 border-t border-slate-200 flex-shrink-0">
               <button type="button" onClick={() => showEditModal ? setShowEditModal(false) : setShowAddModal(false)} className="px-5 h-10 border border-slate-300 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-xl">Cancel</button>
-              <button type="submit" form="guide-form" disabled={submitting} className="px-5 h-10 bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 rounded-xl">
+              <button type="submit" form="guide-form" disabled={submitting || uploadingPhoto || uploadingGallery} className="px-5 h-10 bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 rounded-xl">
                 {submitting ? "Saving..." : showEditModal ? "Save Changes" : "Create Guide"}
               </button>
             </div>

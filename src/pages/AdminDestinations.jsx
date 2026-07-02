@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ChevronDown, Search, Plus, Edit2, Trash2, Star, X } from "lucide-react";
+import { ChevronDown, Search, Plus, Edit2, Trash2, Star, X, UploadCloud, Loader2 } from "lucide-react";
+import { uploadService } from "../services/uploadService"; 
 
 const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) 
   ? import.meta.env.VITE_API_BASE_URL 
@@ -75,13 +76,13 @@ const destinationService = {
 const DEFAULT_FORM = {
   name: "", shortDescription: "", description: "", district: "", province: "",
   category: "BEACH", bestMonths: "", activities: "", latitude: "", longitude: "",
-  coverImageUrl: "", imageUrls: "", travelTimeFrom: "", entryFee: "", openingHours: "",
+  coverImageUrl: "", imageUrls: [], travelTimeFrom: "", entryFee: "", openingHours: "",
   featured: false, active: true, unescoStatus: "", nearbyGems: "",
 };
 
 const CATEGORIES = ["ALL", "BEACH", "CULTURAL", "WILDLIFE", "HILL", "SURF", "ADVENTURE", "HERITAGE", "RELIGIOUS", "CITY"];
 
-// ✅ NEW: Active filter tabs
+// ✅ Active filter tabs
 const STATUS_TABS = [
   { label: "All",      value: "ALL"      },
   { label: "Active",   value: "ACTIVE"   },
@@ -94,12 +95,16 @@ export default function AdminDestinations() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
-  // ✅ NEW state: status tab
+  // ✅ status tab
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [formData, setFormData] = useState(DEFAULT_FORM);
+
+  // ✅ NEW: image upload states
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   useEffect(() => {
     loadDestinations();
@@ -131,7 +136,6 @@ export default function AdminDestinations() {
         (dest.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (dest.district || "").toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === "ALL" || dest.category === categoryFilter;
-      // ✅ NEW: status filter
       const matchesStatus =
         statusFilter === "ALL" ||
         (statusFilter === "ACTIVE"   &&  dest.active) ||
@@ -140,14 +144,57 @@ export default function AdminDestinations() {
     });
   }, [destinations, searchTerm, categoryFilter, statusFilter]);
 
+  // ✅ NEW: Cover image upload handler
+  const handleCoverImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      setError(null);
+      setUploadingCover(true);
+      const res = await uploadService.uploadSingle(file, "destinations");
+      setFormData((prev) => ({ ...prev, coverImageUrl: res.imageUrl }));
+    } catch (err) {
+      setError(err?.message || "Cover image upload failed");
+    } finally {
+      setUploadingCover(false);
+      e.target.value = ""; // same file re-select කරන්න පුළුවන් වෙන්න reset කරනවා
+    }
+  };
+
+  // ✅ NEW: Gallery images upload handler (multiple)
+  const handleGalleryImagesUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    try {
+      setError(null);
+      setUploadingGallery(true);
+      const results = await uploadService.uploadMultiple(files, "destinations");
+      const newUrls = results.map((r) => r.imageUrl);
+      setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...newUrls] }));
+    } catch (err) {
+      setError(err?.message || "Gallery images upload failed");
+    } finally {
+      setUploadingGallery(false);
+      e.target.value = "";
+    }
+  };
+
+  // ✅ NEW: Remove a gallery image (only from form state, before save)
+  const handleRemoveGalleryImage = (urlToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((url) => url !== urlToRemove),
+    }));
+  };
+
+  // ✅ NEW: Remove the cover image
+  const handleRemoveCoverImage = () => {
+    setFormData((prev) => ({ ...prev, coverImageUrl: "" }));
+  };
+
   const handleAddDestination = async (e) => {
     e.preventDefault();
     try {
-      const imageUrlsArray = formData.imageUrls
-        .split(",")
-        .map((url) => url.trim())
-        .filter(Boolean);
-
       const payload = {
         name: formData.name,
         shortDescription: formData.shortDescription,
@@ -160,7 +207,7 @@ export default function AdminDestinations() {
         latitude: parseFloat(formData.latitude) || 0,
         longitude: parseFloat(formData.longitude) || 0,
         coverImageUrl: formData.coverImageUrl,
-        imageUrls: imageUrlsArray,
+        imageUrls: formData.imageUrls, // ✅ දැනටමත් array එකක් (upload වුණු URLs)
         travelTimeFrom: formData.travelTimeFrom,
         entryFee: formData.entryFee,
         openingHours: formData.openingHours,
@@ -198,7 +245,7 @@ export default function AdminDestinations() {
       latitude: destination.latitude?.toString() || "",
       longitude: destination.longitude?.toString() || "",
       coverImageUrl: destination.coverImageUrl || "",
-      imageUrls: destination.imageUrls ? destination.imageUrls.join(", ") : "",
+      imageUrls: destination.imageUrls || [], // ✅ දැනටමත් array
       travelTimeFrom: destination.travelTimeFrom || "",
       entryFee: destination.entryFee || "",
       openingHours: destination.openingHours || "",
@@ -257,7 +304,7 @@ export default function AdminDestinations() {
             </button>
           </div>
 
-          {/* ✅ NEW: Status Tabs */}
+          {/* Status Tabs */}
           <div className="flex gap-1 mb-6 border-b border-slate-200">
             {STATUS_TABS.map((tab) => (
               <button
@@ -490,14 +537,89 @@ export default function AdminDestinations() {
                 <input type="text" value={formData.nearbyGems} onChange={(e) => setFormData({ ...formData, nearbyGems: e.target.value })} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="e.g., Pidurangala Rock" />
               </div>
 
+              {/* ✅ NEW: Cover Image — file upload (replaces URL text input) */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Cover Image URL *</label>
-                <input type="url" required value={formData.coverImageUrl} onChange={(e) => setFormData({ ...formData, coverImageUrl: e.target.value })} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="https://example.com/cover.jpg" />
+                <label className="block text-sm font-medium text-slate-700 mb-2">Cover Image {!formData.coverImageUrl && "*"}</label>
+
+                {formData.coverImageUrl ? (
+                  <div className="flex items-center gap-4">
+                    <img src={formData.coverImageUrl} alt="Cover preview" className="h-20 w-20 rounded-lg object-cover border border-slate-200" />
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm text-blue-600 hover:text-blue-700 cursor-pointer font-medium">
+                        Replace image
+                        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleCoverImageUpload} className="hidden" />
+                      </label>
+                      <button type="button" onClick={handleRemoveCoverImage} className="text-sm text-red-600 hover:text-red-700 font-medium text-left">
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-lg py-8 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition ${uploadingCover ? "pointer-events-none opacity-70" : ""}`}>
+                    {uploadingCover ? (
+                      <>
+                        <Loader2 size={24} className="text-emerald-600 animate-spin" />
+                        <span className="text-sm text-slate-500">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud size={24} className="text-slate-400" />
+                        <span className="text-sm text-slate-500">Click to upload cover image (JPG, PNG, WEBP — max 5MB)</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleCoverImageUpload}
+                      className="hidden"
+                      required={!editingId && !formData.coverImageUrl}
+                    />
+                  </label>
+                )}
               </div>
 
+              {/* ✅ NEW: Gallery Images — multi file upload (replaces comma-separated URL textarea) */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Gallery Image URLs (comma-separated)</label>
-                <textarea value={formData.imageUrls} onChange={(e) => setFormData({ ...formData, imageUrls: e.target.value })} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" rows={3} placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg" />
+                <label className="block text-sm font-medium text-slate-700 mb-2">Gallery Images</label>
+
+                <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-lg py-6 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition ${uploadingGallery ? "pointer-events-none opacity-70" : ""}`}>
+                  {uploadingGallery ? (
+                    <>
+                      <Loader2 size={22} className="text-emerald-600 animate-spin" />
+                      <span className="text-sm text-slate-500">Uploading images...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud size={22} className="text-slate-400" />
+                      <span className="text-sm text-slate-500">Click to upload gallery images (multiple allowed)</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={handleGalleryImagesUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                {formData.imageUrls.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {formData.imageUrls.map((url) => (
+                      <div key={url} className="relative group">
+                        <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover border border-slate-200" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveGalleryImage(url)}
+                          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition"
+                          title="Remove"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -517,7 +639,13 @@ export default function AdminDestinations() {
 
               <div className="flex gap-4 pt-6 border-t border-slate-100">
                 <button type="button" onClick={() => { setShowAddModal(false); setEditingId(null); }} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition font-medium">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition font-medium">{editingId ? "Update Destination" : "Create Destination"}</button>
+                <button
+                  type="submit"
+                  disabled={uploadingCover || uploadingGallery}
+                  className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {editingId ? "Update Destination" : "Create Destination"}
+                </button>
               </div>
             </form>
           </div>
