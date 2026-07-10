@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { uploadService } from "../services/uploadService";
+import DataTable from "../components/admin/DataTable";
+import ConfirmDialog from "../components/admin/ConfirmDialog";
+import { UploadCloud, Loader2, X } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
@@ -18,8 +21,7 @@ const SRI_LANKA_DISTRICTS = [
 ];
 
 export default function AdminVehicles() {
-  const navigate = useNavigate();
-  const { token, isAdmin } = useAuth();
+  const { token } = useAuth();
   
   const [vehicles, setVehicles] = useState([]);
   const [stats, setStats] = useState({
@@ -31,12 +33,14 @@ export default function AdminVehicles() {
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const [successMessage, setSuccessMessage] = useState(null);
+
   const [showModal, setShowModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  
+  const [uploadingImages, setUploadingImages] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All Types");
 
@@ -50,7 +54,7 @@ export default function AdminVehicles() {
     color: "",
     latitude: "",
     longitude: "",
-    imageUrls: "",
+    imageUrls: [],
     licensePlate: "",
     pricePerDay: "",
     currency: "USD",
@@ -58,6 +62,7 @@ export default function AdminVehicles() {
     pickupLocation: "",
     driverName: "",
     driverPhone: "",
+    whatsappNumber: "",
     driverLanguages: "",
     driverIncluded: false,
     airportTransfer: false,
@@ -67,12 +72,6 @@ export default function AdminVehicles() {
   });
 
   useEffect(() => {
-    // Admin කෙනෙක් නෙමෙයි නම් login එකට යවනවා
-    if (!isAdmin) {
-      navigate("/login");
-      return;
-    }
-
     async function loadData() {
       try {
         setLoading(true);
@@ -113,18 +112,48 @@ export default function AdminVehicles() {
     }
 
     loadData();
-  }, [isAdmin, navigate, token]);
+  }, [token]);
+
+  useEffect(() => {
+    if (!successMessage) return;
+    const timeout = setTimeout(() => setSuccessMessage(null), 4000);
+    return () => clearTimeout(timeout);
+  }, [successMessage]);
 
   const handleAddClick = () => {
     setEditingVehicle(null);
     setFormData({
       name: "", type: "CAR", brand: "", model: "", year: "", seats: "",
-      color: "", latitude: "", longitude: "", imageUrls: "", licensePlate: "", pricePerDay: "", currency: "USD",
-      district: "Colombo", pickupLocation: "", driverName: "", driverPhone: "",
+      color: "", latitude: "", longitude: "", imageUrls: [], licensePlate: "", pricePerDay: "", currency: "USD",
+      district: "Colombo", pickupLocation: "", driverName: "", driverPhone: "", whatsappNumber: "",
       driverLanguages: "", driverIncluded: false, airportTransfer: false,
       available: true, description: "", category: "STANDARD",
     });
     setShowModal(true);
+  };
+
+  const handleImagesUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    try {
+      setError(null);
+      setUploadingImages(true);
+      const results = await uploadService.uploadMultiple(files, "vehicles");
+      const newUrls = results.map((r) => r.imageUrl);
+      setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...newUrls] }));
+    } catch (err) {
+      setError(err?.message || "Image upload failed");
+    } finally {
+      setUploadingImages(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = (urlToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((url) => url !== urlToRemove),
+    }));
   };
 
   const handleEditClick = (vehicle) => {
@@ -140,7 +169,7 @@ export default function AdminVehicles() {
       color: vehicle.color || "",
       latitude: vehicle.latitude?.toString() || "",
       longitude: vehicle.longitude?.toString() || "",
-      imageUrls: vehicle.imageUrls?.join(", ") || "",
+      imageUrls: vehicle.imageUrls || [],
       licensePlate: vehicle.licensePlate || "",
       pricePerDay: vehicle.pricePerDay?.toString() || "",
       currency: vehicle.currency || "USD",
@@ -148,6 +177,7 @@ export default function AdminVehicles() {
       pickupLocation: vehicle.pickupLocation || "",
       driverName: vehicle.driverName || "",
       driverPhone: vehicle.driverPhone || "",
+      whatsappNumber: vehicle.whatsappNumber || "",
       driverLanguages: vehicle.driverLanguages || "",
       driverIncluded: vehicle.driverIncluded || false,
       airportTransfer: vehicle.airportTransfer || false,
@@ -161,10 +191,11 @@ export default function AdminVehicles() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(null);
 
     try {
       if (!token) {
-        alert("Not authenticated. Please log in.");
+        setError("Not authenticated. Please log in.");
         return;
       }
 
@@ -183,9 +214,7 @@ export default function AdminVehicles() {
         color: formData.color,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-        imageUrls: formData.imageUrls
-            ? formData.imageUrls.split(",").map(url => url.trim()).filter(Boolean)
-            : [],
+        imageUrls: formData.imageUrls,
         licensePlate: formData.licensePlate,
         pricePerDay: formData.pricePerDay ? parseFloat(formData.pricePerDay) : 0,
         currency: formData.currency,
@@ -193,6 +222,7 @@ export default function AdminVehicles() {
         pickupLocation: formData.pickupLocation,
         driverName: formData.driverName,
         driverPhone: formData.driverPhone,
+        whatsappNumber: formData.whatsappNumber,
         driverLanguages: formData.driverLanguages,
         driverIncluded: formData.driverIncluded,
         airportTransfer: formData.airportTransfer,
@@ -215,7 +245,7 @@ export default function AdminVehicles() {
         throw new Error(errorData.message || `Failed to ${editingVehicle ? "update" : "create"} vehicle`);
       }
 
-      alert(`Vehicle ${editingVehicle ? "updated" : "created"} successfully!`);
+      setSuccessMessage(`Vehicle ${editingVehicle ? "updated" : "created"} successfully!`);
       setShowModal(false);
 
       // Reload vehicles
@@ -226,7 +256,7 @@ export default function AdminVehicles() {
         setVehicles(await vehiclesRes.json());
       }
     } catch (err) {
-      alert(err.message || "Operation failed");
+      setError(err.message || "Operation failed");
     } finally {
       setSubmitting(false);
     }
@@ -235,10 +265,10 @@ export default function AdminVehicles() {
   const handleToggleStatus = async (vehicleId, currentStatus) => {
     try {
       if (!token) {
-        alert("Not authenticated. Please log in.");
+        setError("Not authenticated. Please log in.");
         return;
       }
-      
+
       const response = await fetch(`${API_BASE}/api/v1/admin/vehicles/${vehicleId}`, {
         method: "PATCH",
         headers: {
@@ -257,14 +287,14 @@ export default function AdminVehicles() {
         v.id === vehicleId ? { ...v, available: !currentStatus } : v
       ));
     } catch (err) {
-      alert(err.message || "Failed to update status");
+      setError(err.message || "Failed to update status");
     }
   };
 
   const handleDelete = async (vehicleId) => {
     try {
       if (!token) {
-        alert("Not authenticated. Please log in.");
+        setError("Not authenticated. Please log in.");
         return;
       }
 
@@ -282,7 +312,7 @@ export default function AdminVehicles() {
       setVehicles(vehicles.filter((v) => v.id !== vehicleId));
       setDeleteConfirm(null);
     } catch (err) {
-      alert(err.message || "Failed to delete vehicle");
+      setError(err.message || "Failed to delete vehicle");
     }
   };
 
@@ -346,6 +376,19 @@ export default function AdminVehicles() {
             </div>
           </header>
 
+          {error && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 flex justify-between items-center">
+              <span>{error}</span>
+              <button onClick={() => setError(null)}><X size={16} /></button>
+            </div>
+          )}
+          {successMessage && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 flex justify-between items-center">
+              <span>{successMessage}</span>
+              <button onClick={() => setSuccessMessage(null)}><X size={16} /></button>
+            </div>
+          )}
+
           {/* Stats Cards */}
           <section className="grid gap-4 md:grid-cols-4">
             {totals.map((item) => (
@@ -378,122 +421,85 @@ export default function AdminVehicles() {
               </button>
             </div>
 
-            <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200">
-              {loading && (
-                <div className="flex items-center justify-center p-12">
-                  <p className="text-slate-500">Loading vehicles...</p>
-                </div>
-              )}
-
-              {error && !loading && (
-                <div className="bg-rose-50 p-6">
-                  <p className="text-rose-800">Error: {error}</p>
-                </div>
-              )}
-
-              {!loading && !error && (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-slate-200 text-left text-sm whitespace-nowrap">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        <th className="px-6 py-4 font-medium text-slate-500">Vehicle</th>
-                        <th className="px-6 py-4 font-medium text-slate-500">Type</th>
-                        <th className="px-6 py-4 font-medium text-slate-500">District</th>
-                        <th className="px-6 py-4 font-medium text-slate-500">Price/Day</th>
-                        <th className="px-6 py-4 font-medium text-slate-500">Driver</th>
-                        <th className="px-6 py-4 font-medium text-slate-500">Status</th>
-                        <th className="px-6 py-4 font-medium text-slate-500">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 bg-white">
-                      {filteredVehicles.length === 0 ? (
-                        <tr>
-                          <td colSpan="7" className="px-6 py-12 text-center text-slate-500">
-                            {searchTerm || filterType !== "All Types" ? "No vehicles match your search" : "No vehicles found"}
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredVehicles.map((vehicle, index) => (
-                          <tr key={vehicle.id} className={index % 2 === 1 ? "bg-slate-50" : "bg-white"}>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-lg">🚗</span>
-                                <div>
-                                  <p className="font-semibold text-slate-950">{vehicle.name}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-slate-600 font-semibold">{vehicle.type}</td>
-                            <td className="px-6 py-4 text-slate-600">{vehicle.district || "-"}</td>
-                            <td className="px-6 py-4 text-slate-900 font-semibold">
-                              {vehicle.pricePerDay != null ? `${vehicle.currency || "$"}${vehicle.pricePerDay}/day` : "-"}
-                            </td>
-                            <td className="px-6 py-4 text-slate-600">{vehicle.driverName || "-"}</td>
-                            <td className="px-6 py-4">
-                              <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${vehicle.available ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
-                                {vehicle.available ? "Available" : "Unavailable"}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2 text-slate-500">
-                                <button
-                                  onClick={() => handleEditClick(vehicle)}
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
-                                  title="Edit vehicle"
-                                >
-                                  ✎
-                                </button>
-                                <button
-                                  onClick={() => handleToggleStatus(vehicle.id, vehicle.available ?? true)}
-                                  className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition ${vehicle.available ? "bg-amber-100 text-amber-600 hover:bg-amber-200" : "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"}`}
-                                  title={vehicle.available ? "Mark unavailable" : "Mark available"}
-                                >
-                                  {vehicle.available ? "⏻" : "✓"}
-                                </button>
-                                <button
-                                  onClick={() => setDeleteConfirm(vehicle.id)}
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-rose-600 transition hover:bg-rose-100"
-                                  title="Delete vehicle"
-                                >
-                                  🗑️
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+            <div className="mt-6">
+              <DataTable
+                loading={loading}
+                emptyIcon="🚗"
+                emptyTitle={searchTerm || filterType !== "All Types" ? "No vehicles match your search" : "No vehicles found"}
+                rows={filteredVehicles}
+                columns={[
+                  {
+                    key: "name", label: "Vehicle",
+                    render: (vehicle) => (
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-lg">🚗</span>
+                        <p className="font-semibold text-slate-950">{vehicle.name}</p>
+                      </div>
+                    ),
+                  },
+                  { key: "type", label: "Type", render: (vehicle) => <span className="font-semibold">{vehicle.type}</span> },
+                  { key: "district", label: "District", render: (vehicle) => vehicle.district || "-" },
+                  {
+                    key: "price", label: "Price/Day",
+                    render: (vehicle) => (
+                      <span className="font-semibold text-slate-900">
+                        {vehicle.pricePerDay != null ? `${vehicle.currency || "$"}${vehicle.pricePerDay}/day` : "-"}
+                      </span>
+                    ),
+                  },
+                  { key: "driver", label: "Driver", render: (vehicle) => vehicle.driverName || "-" },
+                  {
+                    key: "status", label: "Status",
+                    render: (vehicle) => (
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${vehicle.available ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
+                        {vehicle.available ? "Available" : "Unavailable"}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "actions", label: "Actions",
+                    render: (vehicle) => (
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <button
+                          onClick={() => handleEditClick(vehicle)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                          title="Edit vehicle"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          onClick={() => handleToggleStatus(vehicle.id, vehicle.available ?? true)}
+                          className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition ${vehicle.available ? "bg-amber-100 text-amber-600 hover:bg-amber-200" : "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"}`}
+                          title={vehicle.available ? "Mark unavailable" : "Mark available"}
+                        >
+                          {vehicle.available ? "⏻" : "✓"}
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(vehicle.id)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-rose-600 transition hover:bg-rose-100"
+                          title="Delete vehicle"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
             </div>
           </section>
         </main>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full mx-4">
-            <p className="text-lg font-semibold text-slate-950">Delete Vehicle?</p>
-            <p className="mt-2 text-sm text-slate-500">This action cannot be undone.</p>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 rounded-2xl border border-slate-200 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                className="flex-1 rounded-2xl bg-rose-600 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        title="Delete Vehicle?"
+        message="This action cannot be undone."
+        confirmLabel="Delete"
+        tone="red"
+        onCancel={() => setDeleteConfirm(null)}
+        onConfirm={() => handleDelete(deleteConfirm)}
+      />
 
       {/* Add/Edit Vehicle Modal */}
       {showModal && (
@@ -670,6 +676,16 @@ export default function AdminVehicles() {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">WhatsApp Number</label>
+                  <input
+                    type="tel" value={formData.whatsappNumber}
+                    onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    placeholder="94771234567 (no + or spaces)"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">License Plate</label>
                   <input
                     type="text" value={formData.licensePlate}
@@ -701,17 +717,46 @@ export default function AdminVehicles() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Images (Comma separated URLs)
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle Images</label>
+
+                  <label className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-300 py-6 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition text-sm ${uploadingImages ? "pointer-events-none opacity-70" : ""}`}>
+                    {uploadingImages ? (
+                      <>
+                        <Loader2 size={20} className="text-emerald-600 animate-spin" />
+                        <span className="text-slate-500">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud size={20} className="text-slate-400" />
+                        <span className="text-slate-500">Click to upload images (multiple allowed — JPG, PNG, WEBP, max 5MB each)</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={handleImagesUpload}
+                      className="hidden"
+                    />
                   </label>
-                  <textarea
-                    value={formData.imageUrls}
-                    onChange={(e) => setFormData({ ...formData, imageUrls: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
-                    rows="2"
-                  />
-                  <p className="mt-1 text-xs text-slate-500">Add multiple image URLs separated by commas.</p>
+
+                  {formData.imageUrls.length > 0 && (
+                    <div className="flex flex-wrap gap-3 mt-3">
+                      {formData.imageUrls.map((url) => (
+                        <div key={url} className="relative group">
+                          <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover border border-slate-200" />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(url)}
+                            className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition"
+                            title="Remove"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="md:col-span-2 flex flex-wrap gap-6 pt-2">
@@ -750,7 +795,7 @@ export default function AdminVehicles() {
                   Cancel
                 </button>
                 <button
-                  type="submit" disabled={submitting}
+                  type="submit" disabled={submitting || uploadingImages}
                   className="flex-1 rounded-2xl bg-emerald-600 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {submitting ? "Saving..." : editingVehicle ? "Update Vehicle" : "Add Vehicle"}

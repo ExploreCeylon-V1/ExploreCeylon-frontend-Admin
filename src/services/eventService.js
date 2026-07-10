@@ -66,6 +66,8 @@ export async function getEventById(id) {
   return ensureStatus(parsed);
 }
 
+// data can include: title, description, category, region, location,
+// startDate, endDate, status, featured, imageUrl
 export async function createEvent(data) {
   const res = await fetch(`${BASE_URL}/api/v1/events`, {
     method: "POST",
