@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import * as guideService from "../services/guideService";
 import { uploadService } from "../services/uploadService"; // ⚠️ path එක oyaage folder structure එකට ගැලපෙන්න check කරන්න
+import ConfirmDialog from "../components/admin/ConfirmDialog";
 
 const specialties = [
   "All Specialties", "Wildlife", "Cultural", "Food", "Photography", "Surfing", "Ayurveda", "Birdwatching", "Trekking",
@@ -10,13 +9,10 @@ const specialties = [
 
 const EMPTY_FORM = {
   fullName: "", bio: "", photoUrl: "", languages: "", specialties: "",
-  district: "", pricePerDay: "", phone: "", email: "", imageUrls: [], // ✅ FIX: imageUrls array
+  district: "", pricePerDay: "", phone: "", whatsappNumber: "", email: "", imageUrls: [], // ✅ FIX: imageUrls array
 };
 
 export default function AdminGuides() {
-  const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
-  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState(specialties[0]);
   const [guides, setGuides] = useState([]);
@@ -72,11 +68,6 @@ export default function AdminGuides() {
   const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
-    if (!isAdmin) {
-      navigate("/login");
-      return;
-    }
-
     const loadGuides = async () => {
       setLoadingGuides(true);
       setGuideListError(null);
@@ -106,7 +97,7 @@ export default function AdminGuides() {
     };
 
     loadGuides();
-  }, [isAdmin, navigate]);
+  }, []);
 
   const handleInputChange = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
 
@@ -187,7 +178,7 @@ export default function AdminGuides() {
       setFormData({
         fullName: guideData.fullName, bio: guideData.bio || "", photoUrl: guideData.photoUrl || "",
         languages: guideData.languages, specialties: guideData.specialties, district: guideData.district,
-        pricePerDay: guideData.pricePerDay.toString(), phone: guideData.phone || "", email: guideData.email || "",
+        pricePerDay: guideData.pricePerDay.toString(), phone: guideData.phone || "", whatsappNumber: guideData.whatsappNumber || "", email: guideData.email || "",
         imageUrls: guideData.imageUrls || [], // ✅ FIX: array
       });
       setShowEditModal(true);
@@ -606,6 +597,7 @@ export default function AdminGuides() {
                   <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Specialties<input type="text" value={formData.specialties} onChange={(e) => handleInputChange("specialties", e.target.value)} placeholder="WILDLIFE,PHOTOGRAPHY" required className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white" /></label>
                   <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Price per day<input type="number" value={formData.pricePerDay} onChange={(e) => handleInputChange("pricePerDay", e.target.value)} min="0" step="0.01" required className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white" /></label>
                   <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Phone<input type="tel" value={formData.phone} onChange={(e) => handleInputChange("phone", e.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white" /></label>
+                  <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">WhatsApp Number<input type="tel" value={formData.whatsappNumber} onChange={(e) => handleInputChange("whatsappNumber", e.target.value)} placeholder="94771234567 (no + or spaces)" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white" /></label>
                   <label className="flex flex-col gap-1 text-xs font-semibold text-slate-600">Email<input type="email" value={formData.email} onChange={(e) => handleInputChange("email", e.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:bg-white" /></label>
 
                   {/* ✅ FIX: Profile Photo — single upload */}
@@ -662,21 +654,16 @@ export default function AdminGuides() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-white shadow-2xl">
-            <div className="border-b border-slate-200 px-6 py-4"><h3 className="text-lg font-bold text-slate-950">Delete Guide</h3></div>
-            <div className="space-y-4 px-6 py-5">
-              <p className="text-slate-600">Are you sure you want to delete <span className="font-semibold text-slate-950">{selectedGuideDetails?.fullName ?? "this guide"}</span>? This action cannot be undone.</p>
-            </div>
-            <div className="flex gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
-              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 h-10 rounded-2xl border border-slate-300 bg-white text-sm font-semibold hover:bg-slate-100">Cancel</button>
-              <button type="button" onClick={handleDeleteGuide} disabled={submitting} className="flex-1 h-10 rounded-2xl bg-rose-600 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60">{submitting ? "Deleting..." : "Delete Guide"}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        loading={submitting}
+        title="Delete Guide"
+        message={`Are you sure you want to delete ${selectedGuideDetails?.fullName ?? "this guide"}? This action cannot be undone.`}
+        confirmLabel="Delete Guide"
+        tone="red"
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteGuide}
+      />
 
       {/* Bookings Calendar Modal */}
       {showCalendarModal && (

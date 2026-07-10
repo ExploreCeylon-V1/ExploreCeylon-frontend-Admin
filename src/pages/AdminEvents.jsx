@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  ChevronDown, ChevronLeft, ChevronRight, Search, Plus, List, Calendar, MapPin, X, UploadCloud, Loader2
+  ChevronDown, ChevronLeft, ChevronRight, Plus, List, Calendar, MapPin, X, UploadCloud, Loader2, Download
 } from "lucide-react";
 import * as eventService from "../services/eventService";
 import { uploadService } from "../services/uploadService"; // ⚠️ path එක oyaage folder structure එකට ගැලපෙන්න check කරන්න
+import DataTable from "../components/admin/DataTable";
+import SearchBar from "../components/admin/SearchBar";
+import ConfirmDialog from "../components/admin/ConfirmDialog";
+import { downloadCsv } from "../utils/csvExport";
 
 const DEFAULT_FORM = {
   name: "", category: "FESTIVAL", district: "", location: "",
@@ -284,10 +288,7 @@ export default function AdminEventsPage() {
           <div className="mb-6"><h1 className="text-3xl font-bold text-slate-900">Events & Calendar</h1></div>
 
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 relative">
-              <Search size={18} className="absolute left-3 top-2.5 text-slate-400" />
-              <input type="text" placeholder="Search by name or district..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
-            </div>
+            <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Search by name or district..." />
             <div className="relative">
               <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none pr-9 text-sm">
                 <option value="ALL">All Categories</option>
@@ -310,6 +311,19 @@ export default function AdminEventsPage() {
               <ChevronDown size={15} className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" />
             </div>
             <div className="flex-1" />
+            <button
+              onClick={() => downloadCsv("events.csv", [
+                { label: "Title", value: (ev) => ev.title },
+                { label: "Category", value: (ev) => ev.category },
+                { label: "Region", value: (ev) => ev.region },
+                { label: "Location", value: (ev) => ev.location },
+                { label: "Start Date", value: (ev) => ev.startDate },
+                { label: "End Date", value: (ev) => ev.endDate },
+              ], filtered)}
+              className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition"
+            >
+              <Download size={16} /> Export CSV
+            </button>
             <button onClick={() => { setEditingId(null); setFormData(DEFAULT_FORM); setShowModal(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition"><Plus size={18} /> Add New Event</button>
           </div>
 
@@ -342,43 +356,36 @@ export default function AdminEventsPage() {
                   <CalendarView events={filtered} year={calYear} month={calMonth} />
                 </>
               ) : (
-                <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-                  {filtered.length === 0 ? (
-                    <div className="p-12 text-center text-slate-400"><p className="text-3xl mb-2">📅</p><p className="font-medium">No events found</p></div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                          <tr>{["Image", "Event Name", "Category", "District", "Dates", "Location", "Actions"].map((h) => (<th key={h} className="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>))}</tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {filtered.map((ev) => (
-                            <tr key={ev.id} className="hover:bg-slate-50 transition">
-                              <td className="px-5 py-4">
-                                {ev.imageUrls && ev.imageUrls.length > 0 ? (
-                                  <img src={ev.imageUrls[0]} alt={ev.title} className="h-10 w-10 rounded-lg object-cover border border-slate-200" />
-                                ) : (
-                                  <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-sm">🖼️</div>
-                                )}
-                              </td>
-                              <td className="px-5 py-4 font-medium text-slate-900 text-sm whitespace-nowrap">{ev.title}</td>
-                              <td className="px-5 py-4"><CategoryBadge category={ev.category} /></td>
-                              <td className="px-5 py-4 text-sm text-slate-600">{ev.region}</td>
-                              <td className="px-5 py-4 text-sm text-slate-600 whitespace-nowrap">{formatDateRange(ev.startDate, ev.endDate)}</td>
-                              <td className="px-5 py-4 text-sm text-slate-600">{ev.location}</td>
-                              <td className="px-5 py-4">
-                                <div className="flex items-center gap-1">
-                                  <button onClick={() => handleEdit(ev)} className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
-                                  <button onClick={() => setDeletingId(ev.id)} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Del</button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
+                <DataTable
+                  loading={false}
+                  emptyIcon="📅"
+                  emptyTitle="No events found"
+                  rows={filtered}
+                  columns={[
+                    {
+                      key: "image", label: "Image",
+                      render: (ev) => ev.imageUrls?.length > 0 ? (
+                        <img src={ev.imageUrls[0]} alt={ev.title} className="h-10 w-10 rounded-lg object-cover border border-slate-200" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-sm">🖼️</div>
+                      ),
+                    },
+                    { key: "title", label: "Event Name", render: (ev) => <span className="font-medium text-slate-900 whitespace-nowrap">{ev.title}</span> },
+                    { key: "category", label: "Category", render: (ev) => <CategoryBadge category={ev.category} /> },
+                    { key: "region", label: "District", render: (ev) => ev.region },
+                    { key: "dates", label: "Dates", render: (ev) => <span className="whitespace-nowrap">{formatDateRange(ev.startDate, ev.endDate)}</span> },
+                    { key: "location", label: "Location", render: (ev) => ev.location },
+                    {
+                      key: "actions", label: "Actions",
+                      render: (ev) => (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleEdit(ev)} className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+                          <button onClick={() => setDeletingId(ev.id)} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Del</button>
+                        </div>
+                      ),
+                    },
+                  ]}
+                />
               )}
             </div>
 
@@ -506,18 +513,15 @@ export default function AdminEventsPage() {
         </div>
       )}
 
-      {deletingId && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full">
-            <h3 className="text-xl font-bold text-slate-900 mb-3">Delete Event?</h3>
-            <p className="text-slate-500 text-sm mb-6">This event will be permanently removed. This action cannot be undone.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeletingId(null)} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition text-sm font-medium">Cancel</button>
-              <button onClick={() => handleDelete(deletingId)} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition text-sm font-medium">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!deletingId}
+        title="Delete Event?"
+        message="This event will be permanently removed. This action cannot be undone."
+        confirmLabel="Delete"
+        tone="red"
+        onCancel={() => setDeletingId(null)}
+        onConfirm={() => handleDelete(deletingId)}
+      />
     </div>
   );
 }

@@ -10,8 +10,14 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const t = localStorage.getItem("ec_admin_token");
-    const u = localStorage.getItem("ec_admin_user");
+    const t =
+      localStorage.getItem("ec_admin_token") ||
+      localStorage.getItem("exploreCeylonToken") ||
+      localStorage.getItem("token");
+    const u =
+      localStorage.getItem("ec_admin_user") ||
+      localStorage.getItem("exploreCeylonUser") ||
+      localStorage.getItem("user");
     if (t && u) {
       try {
         setToken(t);
@@ -19,6 +25,10 @@ export function AuthProvider({ children }) {
       } catch {
         localStorage.removeItem("ec_admin_token");
         localStorage.removeItem("ec_admin_user");
+        localStorage.removeItem("exploreCeylonToken");
+        localStorage.removeItem("exploreCeylonUser");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
       }
     }
     setLoading(false);
@@ -29,6 +39,10 @@ export function AuthProvider({ children }) {
     setUser(newUser);
     localStorage.setItem("ec_admin_token", newToken);
     localStorage.setItem("ec_admin_user", JSON.stringify(newUser));
+    localStorage.setItem("exploreCeylonToken", newToken);
+    localStorage.setItem("token", newToken);
+    localStorage.setItem("exploreCeylonUser", JSON.stringify(newUser));
+    localStorage.setItem("user", JSON.stringify(newUser));
   };
 
   const logout = (redirectTo = "/login") => {
@@ -45,7 +59,17 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token, isAdmin: user?.role === "ADMIN", loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        isAuthenticated: !!token,
+        isAdmin: user?.role === "ADMIN",
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
