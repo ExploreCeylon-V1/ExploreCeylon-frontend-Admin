@@ -164,11 +164,19 @@ export default function AdminSettings() {
     })();
   }, [user]);
 
+  const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      showToast("error", "Only JPG, PNG or WebP images are allowed (e.g. not HEIC from an iPhone)");
+      e.target.value = "";
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       showToast("error", "Image must be smaller than 5 MB");
+      e.target.value = "";
       return;
     }
     setAvatarFile(file);
@@ -189,8 +197,8 @@ export default function AdminSettings() {
       }
       showToast("success", "Profile picture updated successfully");
       setAvatarFile(null);
-    } catch {
-      showToast("error", "Failed to upload profile picture");
+    } catch (err) {
+      showToast("error", err?.message || "Failed to upload profile picture");
     } finally {
       setUploadingAvatar(false);
     }
@@ -210,8 +218,8 @@ export default function AdminSettings() {
         localStorage.setItem("ec_admin_user", JSON.stringify(u));
       }
       showToast("success", "Profile picture removed");
-    } catch {
-      showToast("error", "Failed to remove profile picture");
+    } catch (err) {
+      showToast("error", err?.message || "Failed to remove profile picture");
     }
   };
 

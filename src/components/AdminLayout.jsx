@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import AdminNavbar from "./AdminNavbar";
+import AdminSidebar from "./AdminSidebar";
 import { Heart } from "lucide-react";
 
 function AdminFooter() {
@@ -22,12 +22,15 @@ function AdminFooter() {
 
 export default function AdminLayout() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 font-sans">
-      <AdminNavbar />
-      <main className="flex-1">
-        <Outlet />
-      </main>
-      <AdminFooter />
+    <div className="min-h-screen bg-slate-100 font-sans">
+      <AdminSidebar />
+      {/* md:ml-64 reserves space for the fixed left-side sidebar */}
+      <div className="flex flex-col min-h-screen md:ml-64">
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <AdminFooter />
+      </div>
     </div>
   );
 }

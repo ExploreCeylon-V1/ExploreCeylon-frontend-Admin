@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  ChevronDown, ChevronLeft, ChevronRight, Search, Plus, List, Calendar, MapPin, X
+  ChevronDown, ChevronLeft, ChevronRight, Plus, List, Calendar, MapPin, X, UploadCloud, Loader2, Download
 } from "lucide-react";
 import * as eventService from "../services/eventService";
+import { uploadService } from "../services/uploadService"; // ⚠️ path එක oyaage folder structure එකට ගැලපෙන්න check කරන්න
+import DataTable from "../components/admin/DataTable";
+import SearchBar from "../components/admin/SearchBar";
+import ConfirmDialog from "../components/admin/ConfirmDialog";
+import { downloadCsv } from "../utils/csvExport";
 
 const DEFAULT_FORM = {
   name: "", category: "FESTIVAL", district: "", location: "",
   startDate: "", endDate: "", status: "DRAFT", featured: false, description: "",
+  imageUrls: [], // ✅ FIX: backend field name එක "imageUrls" (List<String>) — singular "imageUrl" නෙවෙයි
 };
 
 const CATEGORIES = [
@@ -137,6 +143,9 @@ export default function AdminEventsPage() {
   const [formData, setFormData] = useState(DEFAULT_FORM);
   const [submitting, setSubmitting] = useState(false);
 
+  // ✅ FIX: gallery (multi) image upload state
+  const [uploadingImages, setUploadingImages] = useState(false);
+
   useEffect(() => {
     loadAll();
   }, []);
@@ -176,6 +185,31 @@ export default function AdminEventsPage() {
 
   const sidebarUpcoming = useMemo(() => [...upcoming].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()).slice(0, 5), [upcoming]);
 
+  // ✅ FIX: multi image upload handler (backend supports imageUrls list)
+  const handleImagesUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    try {
+      setError(null);
+      setUploadingImages(true);
+      const results = await uploadService.uploadMultiple(files, "events");
+      const newUrls = results.map((r) => r.imageUrl);
+      setFormData((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...newUrls] }));
+    } catch (err) {
+      setError(err?.message || "Image upload failed");
+    } finally {
+      setUploadingImages(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveImage = (urlToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((url) => url !== urlToRemove),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -184,6 +218,7 @@ export default function AdminEventsPage() {
         title: formData.name, description: formData.description, category: formData.category,
         region: formData.district, location: formData.location, startDate: formData.startDate,
         endDate: formData.endDate, status: formData.status, featured: formData.featured,
+        imageUrls: formData.imageUrls, // ✅ FIX: backend expects "imageUrls" (List<String>)
       };
       if (editingId) await eventService.updateEvent(editingId, payload);
       else await eventService.createEvent(payload);
@@ -202,6 +237,7 @@ export default function AdminEventsPage() {
       name: ev.title || "", description: ev.description || "", category: ev.category || "CULTURAL",
       district: ev.region || "", location: ev.location || "", startDate: ev.startDate || "",
       endDate: ev.endDate || "", status: ev.status || "DRAFT", featured: ev.featured || false,
+      imageUrls: ev.imageUrls || [], // ✅ FIX
     });
     setEditingId(ev.id);
     setShowModal(true);
@@ -252,10 +288,7 @@ export default function AdminEventsPage() {
           <div className="mb-6"><h1 className="text-3xl font-bold text-slate-900">Events & Calendar</h1></div>
 
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 relative">
-              <Search size={18} className="absolute left-3 top-2.5 text-slate-400" />
-              <input type="text" placeholder="Search by name or district..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
-            </div>
+            <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Search by name or district..." />
             <div className="relative">
               <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none pr-9 text-sm">
                 <option value="ALL">All Categories</option>
@@ -278,6 +311,19 @@ export default function AdminEventsPage() {
               <ChevronDown size={15} className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" />
             </div>
             <div className="flex-1" />
+            <button
+              onClick={() => downloadCsv("events.csv", [
+                { label: "Title", value: (ev) => ev.title },
+                { label: "Category", value: (ev) => ev.category },
+                { label: "Region", value: (ev) => ev.region },
+                { label: "Location", value: (ev) => ev.location },
+                { label: "Start Date", value: (ev) => ev.startDate },
+                { label: "End Date", value: (ev) => ev.endDate },
+              ], filtered)}
+              className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition"
+            >
+              <Download size={16} /> Export CSV
+            </button>
             <button onClick={() => { setEditingId(null); setFormData(DEFAULT_FORM); setShowModal(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition"><Plus size={18} /> Add New Event</button>
           </div>
 
@@ -310,36 +356,36 @@ export default function AdminEventsPage() {
                   <CalendarView events={filtered} year={calYear} month={calMonth} />
                 </>
               ) : (
-                <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-                  {filtered.length === 0 ? (
-                    <div className="p-12 text-center text-slate-400"><p className="text-3xl mb-2">📅</p><p className="font-medium">No events found</p></div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                          <tr>{["Event Name", "Category", "District", "Dates", "Location", "Actions"].map((h) => (<th key={h} className="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>))}</tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {filtered.map((ev) => (
-                            <tr key={ev.id} className="hover:bg-slate-50 transition">
-                              <td className="px-5 py-4 font-medium text-slate-900 text-sm whitespace-nowrap">{ev.title}</td>
-                              <td className="px-5 py-4"><CategoryBadge category={ev.category} /></td>
-                              <td className="px-5 py-4 text-sm text-slate-600">{ev.region}</td>
-                              <td className="px-5 py-4 text-sm text-slate-600 whitespace-nowrap">{formatDateRange(ev.startDate, ev.endDate)}</td>
-                              <td className="px-5 py-4 text-sm text-slate-600">{ev.location}</td>
-                              <td className="px-5 py-4">
-                                <div className="flex items-center gap-1">
-                                  <button onClick={() => handleEdit(ev)} className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
-                                  <button onClick={() => setDeletingId(ev.id)} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Del</button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
+                <DataTable
+                  loading={false}
+                  emptyIcon="📅"
+                  emptyTitle="No events found"
+                  rows={filtered}
+                  columns={[
+                    {
+                      key: "image", label: "Image",
+                      render: (ev) => ev.imageUrls?.length > 0 ? (
+                        <img src={ev.imageUrls[0]} alt={ev.title} className="h-10 w-10 rounded-lg object-cover border border-slate-200" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-sm">🖼️</div>
+                      ),
+                    },
+                    { key: "title", label: "Event Name", render: (ev) => <span className="font-medium text-slate-900 whitespace-nowrap">{ev.title}</span> },
+                    { key: "category", label: "Category", render: (ev) => <CategoryBadge category={ev.category} /> },
+                    { key: "region", label: "District", render: (ev) => ev.region },
+                    { key: "dates", label: "Dates", render: (ev) => <span className="whitespace-nowrap">{formatDateRange(ev.startDate, ev.endDate)}</span> },
+                    { key: "location", label: "Location", render: (ev) => ev.location },
+                    {
+                      key: "actions", label: "Actions",
+                      render: (ev) => (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleEdit(ev)} className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+                          <button onClick={() => setDeletingId(ev.id)} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Del</button>
+                        </div>
+                      ),
+                    },
+                  ]}
+                />
               )}
             </div>
 
@@ -401,6 +447,51 @@ export default function AdminEventsPage() {
                 {renderField("End Date", "endDate", { required: true, type: "date" })}
               </div>
               {renderField("Description", "description", { placeholder: "Brief description of the event", rows: 3 })}
+
+              {/* ✅ FIX: Event Images — multi upload, backend stores as imageUrls list */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Event Images</label>
+
+                <label className={`flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-slate-300 rounded-lg py-6 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition text-sm ${uploadingImages ? "pointer-events-none opacity-70" : ""}`}>
+                  {uploadingImages ? (
+                    <>
+                      <Loader2 size={20} className="text-emerald-600 animate-spin" />
+                      <span className="text-slate-500">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud size={20} className="text-slate-400" />
+                      <span className="text-slate-500">Click to upload images (multiple allowed — JPG, PNG, WEBP, max 5MB each)</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={handleImagesUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                {formData.imageUrls.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {formData.imageUrls.map((url) => (
+                      <div key={url} className="relative group">
+                        <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover border border-slate-200" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(url)}
+                          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700 transition"
+                          title="Remove"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
                 <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white">
@@ -415,25 +506,22 @@ export default function AdminEventsPage() {
               </label>
               <div className="flex gap-3 pt-4 border-t border-slate-100">
                 <button type="button" onClick={closeModal} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition text-sm font-medium">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition text-sm font-medium disabled:opacity-60">{submitting ? "Saving…" : editingId ? "Update Event" : "Create Event"}</button>
+                <button type="submit" disabled={submitting || uploadingImages} className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition text-sm font-medium disabled:opacity-60">{submitting ? "Saving…" : editingId ? "Update Event" : "Create Event"}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {deletingId && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full">
-            <h3 className="text-xl font-bold text-slate-900 mb-3">Delete Event?</h3>
-            <p className="text-slate-500 text-sm mb-6">This event will be permanently removed. This action cannot be undone.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeletingId(null)} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition text-sm font-medium">Cancel</button>
-              <button onClick={() => handleDelete(deletingId)} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition text-sm font-medium">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!deletingId}
+        title="Delete Event?"
+        message="This event will be permanently removed. This action cannot be undone."
+        confirmLabel="Delete"
+        tone="red"
+        onCancel={() => setDeletingId(null)}
+        onConfirm={() => handleDelete(deletingId)}
+      />
     </div>
   );
 }
