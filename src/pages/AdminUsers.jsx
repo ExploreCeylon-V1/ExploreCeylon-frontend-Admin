@@ -39,10 +39,15 @@ export default function AdminUsers() {
   const [pendingAction, setPendingAction] = useState(null); // { type, user }
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [password, setPassword] = useState("");
 
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [pendingBulkAction, setPendingBulkAction] = useState(null); // "activate" | "deactivate"
+  const [bulkPassword, setBulkPassword] = useState("");
   const [exporting, setExporting] = useState(false);
+
+  // Actions that need the acting admin's own password re-confirmed.
+  const PASSWORD_GATED_TYPES = new Set(["activate", "deactivate", "changeRole"]);
 
   const load = useCallback(async () => {
     try {
@@ -101,6 +106,7 @@ export default function AdminUsers() {
     try {
       await action();
       setPendingBulkAction(null);
+      setBulkPassword("");
       setSelectedIds(new Set());
       await load();
     } catch (err) {
@@ -112,8 +118,8 @@ export default function AdminUsers() {
 
   const confirmBulkAction = () => {
     const ids = Array.from(selectedIds);
-    if (pendingBulkAction === "activate") runBulkAction(() => adminUserService.bulkActivate(ids));
-    else if (pendingBulkAction === "deactivate") runBulkAction(() => adminUserService.bulkDeactivate(ids));
+    if (pendingBulkAction === "activate") runBulkAction(() => adminUserService.bulkActivate(ids, bulkPassword));
+    else if (pendingBulkAction === "deactivate") runBulkAction(() => adminUserService.bulkDeactivate(ids, bulkPassword));
   };
 
   const handleExport = async () => {
@@ -163,6 +169,7 @@ export default function AdminUsers() {
     try {
       await action();
       setPendingAction(null);
+      setPassword("");
       await load();
     } catch (err) {
       setActionError(err?.message ?? "Action failed");
@@ -173,22 +180,19 @@ export default function AdminUsers() {
 
   const confirmPendingAction = () => {
     if (!pendingAction) return;
-    const { type, user } = pendingAction;
-    if (type === "activate") runAction(() => adminUserService.activateUser(user.id));
-    else if (type === "deactivate") runAction(() => adminUserService.deactivateUser(user.id));
+    const { type, user, newRole } = pendingAction;
+    if (type === "activate") runAction(() => adminUserService.activateUser(user.id, password));
+    else if (type === "deactivate") runAction(() => adminUserService.deactivateUser(user.id, password));
     else if (type === "resetEmail") runAction(() => adminUserService.resetVerification(user.id, "EMAIL"));
     else if (type === "resetPhone") runAction(() => adminUserService.resetVerification(user.id, "PHONE"));
+    else if (type === "changeRole") runAction(() => adminUserService.changeUserRole(user.id, newRole, password));
   };
 
-  const handleRoleChange = async (user, newRole) => {
+  const handleRoleChange = (user, newRole) => {
     if (newRole === user.role) return;
-    try {
-      setActionError(null);
-      await adminUserService.changeUserRole(user.id, newRole);
-      await load();
-    } catch (err) {
-      setActionError(err?.message ?? "Failed to change role");
-    }
+    // Granting or revoking admin access is high-stakes — confirm before committing,
+    // rather than firing on a raw <select> change (one mis-click away otherwise).
+    setPendingAction({ type: "changeRole", user, newRole });
   };
 
   const columns = [
@@ -248,6 +252,10 @@ export default function AdminUsers() {
     deactivate: { title: "Deactivate this user?", message: "They will be signed out and unable to log back in until reactivated.", confirmLabel: "Deactivate", tone: "red" },
     resetEmail: { title: "Reset email verification?", message: "The user will need to re-verify their email address.", confirmLabel: "Reset", tone: "red" },
     resetPhone: { title: "Reset phone verification?", message: "The user will need to re-verify their phone number.", confirmLabel: "Reset", tone: "red" },
+    changeRole:
+      pendingAction?.newRole === "ADMIN"
+        ? { title: "Grant admin access?", message: `${pendingAction?.user?.name} will get full access to the admin panel — user management, bookings, content, everything.`, confirmLabel: "Make Admin", tone: "red" }
+        : { title: "Revoke admin access?", message: `${pendingAction?.user?.name} will be downgraded to a regular traveler account.`, confirmLabel: "Revoke Admin", tone: "red" },
   };
 
   return (
@@ -403,8 +411,12 @@ export default function AdminUsers() {
       <ConfirmDialog
         open={!!pendingAction}
         loading={actionLoading}
-        onCancel={() => setPendingAction(null)}
+        onCancel={() => { setPendingAction(null); setPassword(""); setActionError(null); }}
         onConfirm={confirmPendingAction}
+        requirePassword={pendingAction && PASSWORD_GATED_TYPES.has(pendingAction.type)}
+        password={password}
+        onPasswordChange={setPassword}
+        passwordError={pendingAction && PASSWORD_GATED_TYPES.has(pendingAction.type) ? actionError : null}
         {...(pendingAction ? confirmCopy[pendingAction.type] : {})}
       />
 
@@ -417,8 +429,12 @@ export default function AdminUsers() {
           : "They will be signed out and unable to log back in until reactivated."}
         confirmLabel={pendingBulkAction === "activate" ? "Activate" : "Deactivate"}
         tone={pendingBulkAction === "activate" ? "green" : "red"}
-        onCancel={() => setPendingBulkAction(null)}
+        onCancel={() => { setPendingBulkAction(null); setBulkPassword(""); setActionError(null); }}
         onConfirm={confirmBulkAction}
+        requirePassword
+        password={bulkPassword}
+        onPasswordChange={setBulkPassword}
+        passwordError={actionError}
       />
     </div>
   );

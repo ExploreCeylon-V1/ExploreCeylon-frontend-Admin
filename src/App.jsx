@@ -4,7 +4,6 @@ import AdminLayout from "./components/AdminLayout";
 import AdminRoute from "./components/AdminRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
-import AdminRegister from "./pages/AdminRegister";
 import AdminVehicles from "./pages/AdminVehicles";
 import AdminSettings from "./pages/AdminSettings";
 import AdminEventsPage from "./pages/AdminEvents";
@@ -12,6 +11,7 @@ import AdminHiddenGems from "./pages/AdminHiddenGems";
 import AdminDestinations from "./pages/AdminDestinations";
 import AdminGuides from "./pages/AdminGuides";
 import AdminContactPage from "./pages/AdminContactPage";
+import AdminLiveChatPage from "./pages/AdminLiveChatPage";
 import AdminUsers from "./pages/AdminUsers";
 import AdminBookings from "./pages/AdminBookings";
 import AdminReviews from "./pages/AdminReviews";
@@ -24,7 +24,6 @@ function App() {
         <Routes>
           {/* Public routes — no layout, no auth */}
           <Route path="/login" element={<AdminLogin />} />
-          <Route path="/register" element={<AdminRegister />} />
 
           {/* Every admin page is gated here, once, at the router level —
               individual pages no longer each re-check isAdmin. */}
@@ -42,6 +41,7 @@ function App() {
               <Route path="/guides" element={<AdminGuides />} />
               <Route path="/reviews" element={<AdminReviews />} />
               <Route path="/contact" element={<AdminContactPage />} />
+              <Route path="/live-chat" element={<AdminLiveChatPage />} />
             </Route>
           </Route>
 
