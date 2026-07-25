@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { login as loginUser, isAdmin } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 
@@ -179,8 +179,7 @@ export default function AdminLogin() {
           </div>
 
           <p className="mt-3.5 text-[13px] text-green-900">
-            Need an admin account?{" "}
-            <Link to="/register" className="font-semibold text-[#059669] hover:text-[#047857]">Register here</Link>
+            Need an admin account? Ask an existing admin to grant access from the Users page.
           </p>
         </div>
 

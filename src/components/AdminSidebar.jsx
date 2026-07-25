@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import {
   ChevronDown, Menu, X, LogOut,
   LayoutDashboard, BarChart3, Users, CalendarCheck, Car, Compass,
-  MapPin, Gem, CalendarDays, Star, Settings, Mail,
+  MapPin, Gem, CalendarDays, Star, Settings, Mail, MessageCircle,
 } from "lucide-react";
 
 const navItems = [
@@ -20,6 +20,7 @@ const navItems = [
   { label: "Reviews", href: "/reviews", icon: Star },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Contact Messages", href: "/contact", icon: Mail },
+  { label: "Live Chat", href: "/live-chat", icon: MessageCircle },
 ];
 
 function Brand() {
