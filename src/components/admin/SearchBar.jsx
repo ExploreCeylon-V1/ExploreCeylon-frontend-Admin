@@ -6,6 +6,8 @@ export default function SearchBar({ value, onChange, placeholder = "Search..." }
       <Search size={18} className="absolute left-3 top-2.5 text-slate-400" />
       <input
         type="text"
+        name="table-search"
+        autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
