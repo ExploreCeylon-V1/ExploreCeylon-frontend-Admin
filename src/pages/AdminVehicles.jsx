@@ -65,7 +65,6 @@ export default function AdminVehicles() {
     whatsappNumber: "",
     driverLanguages: "",
     driverIncluded: false,
-    airportTransfer: false,
     available: true,
     description: "",
     category: "STANDARD",
@@ -126,7 +125,7 @@ export default function AdminVehicles() {
       name: "", type: "CAR", brand: "", model: "", year: "", seats: "",
       color: "", latitude: "", longitude: "", imageUrls: [], licensePlate: "", pricePerDay: "", currency: "USD",
       district: "Colombo", pickupLocation: "", driverName: "", driverPhone: "", whatsappNumber: "",
-      driverLanguages: "", driverIncluded: false, airportTransfer: false,
+      driverLanguages: "", driverIncluded: false,
       available: true, description: "", category: "STANDARD",
     });
     setShowModal(true);
@@ -180,7 +179,6 @@ export default function AdminVehicles() {
       whatsappNumber: vehicle.whatsappNumber || "",
       driverLanguages: vehicle.driverLanguages || "",
       driverIncluded: vehicle.driverIncluded || false,
-      airportTransfer: vehicle.airportTransfer || false,
       available: vehicle.available !== false,
       description: vehicle.description || "",
       category: vehicle.category || "STANDARD",
@@ -225,7 +223,6 @@ export default function AdminVehicles() {
         whatsappNumber: formData.whatsappNumber,
         driverLanguages: formData.driverLanguages,
         driverIncluded: formData.driverIncluded,
-        airportTransfer: formData.airportTransfer,
         available: formData.available,
         description: formData.description,
         category: formData.category,
@@ -767,14 +764,6 @@ export default function AdminVehicles() {
                       className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                     />
                     <span className="text-sm font-medium text-slate-700">Driver Included</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox" checked={formData.airportTransfer}
-                      onChange={(e) => setFormData({ ...formData, airportTransfer: e.target.checked })}
-                      className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                    />
-                    <span className="text-sm font-medium text-slate-700">Airport Transfer</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
