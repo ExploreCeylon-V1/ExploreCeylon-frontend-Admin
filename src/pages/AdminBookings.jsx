@@ -77,10 +77,17 @@ export default function AdminBookings() {
     return () => clearTimeout(timeout);
   }, [load]);
 
-  useEffect(() => {
+  // Reset pagination/selection when the filters change. Adjusted directly
+  // during render (React's recommended pattern for "derived state that
+  // resets on prop/state change") instead of in an effect, so it doesn't
+  // cost an extra render pass.
+  const filterKey = JSON.stringify([search, typeFilter, statusFilter, dateFrom, dateTo]);
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
     setPage(0);
     setSelectedIds(new Set());
-  }, [search, typeFilter, statusFilter, dateFrom, dateTo]);
+  }
 
   const handleSort = (key) => {
     if (sortBy === key) {

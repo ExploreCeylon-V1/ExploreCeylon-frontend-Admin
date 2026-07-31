@@ -96,6 +96,11 @@ export default function AdminLiveChatPage() {
     }
   }, []);
 
+  // Initial data fetch on mount/when the callback identity changes.
+  // loadConversations() sets state synchronously (setLoading(true)) before
+  // its first await, which the linter can't distinguish from a risky
+  // render loop — this is the standard "fetch on mount" effect pattern.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadConversations(); }, [loadConversations]);
 
   // One socket for the whole page: admin inbox updates conversation previews live,

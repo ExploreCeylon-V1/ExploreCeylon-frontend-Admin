@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import { uploadService } from "../services/uploadService";
 import DataTable from "../components/admin/DataTable";
 import ConfirmDialog from "../components/admin/ConfirmDialog";

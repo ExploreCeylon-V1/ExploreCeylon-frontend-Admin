@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronDown, Plus, Edit2, Trash2, Check, X, MapPin, Clock, Star, UploadCloud, Loader2, Download } from "lucide-react";
 import * as hiddenGemsService from "../services/hiddenGemsService";
 import { uploadService } from "../services/uploadService"; // ⚠️ path එක oyaage folder structure එකට ගැලපෙන්න check කරන්න
@@ -69,10 +69,6 @@ export default function AdminHiddenGems() {
   // ✅ NEW: gallery image upload state
   const [uploadingImages, setUploadingImages] = useState(false);
 
-  useEffect(() => {
-    loadGems();
-  }, []);
-
   const loadGems = async () => {
     try {
       setLoading(true);
@@ -89,6 +85,15 @@ export default function AdminHiddenGems() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Initial data fetch on mount. loadGems() sets state synchronously
+    // (setLoading(true)) before its first await, which the linter can't
+    // distinguish from a risky render loop — this is the standard "fetch on
+    // mount" effect pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadGems();
+  }, []);
 
   const filteredGems = useMemo(() => {
     const source = activeTab === "PENDING" ? pendingGems : gems;
