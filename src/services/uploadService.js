@@ -42,7 +42,7 @@ export const uploadService = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Failed to upload image: ${response.status}`);
+      throw new Error(errorData.error || errorData.message || `Failed to upload image: ${response.status}`);
     }
 
     return await response.json();
@@ -63,7 +63,7 @@ export const uploadService = {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Failed to upload images: ${response.status}`);
+      throw new Error(errorData.error || errorData.message || `Failed to upload images: ${response.status}`);
     }
 
     return await response.json();

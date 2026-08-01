@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import {
   ChevronDown, Menu, X, LogOut,
   LayoutDashboard, BarChart3, Users, CalendarCheck, Car, Compass,
-  MapPin, Gem, CalendarDays, Star, Settings, Mail, MessageCircle,
+  MapPin, Gem, CalendarDays, Star, Settings, Mail, MessageCircle, Wrench,
 } from "lucide-react";
 
 const navItems = [
@@ -18,6 +18,7 @@ const navItems = [
   { label: "Hidden Gems", href: "/hidden-gems", icon: Gem },
   { label: "Event & Calendar", href: "/events", icon: CalendarDays },
   { label: "Reviews", href: "/reviews", icon: Star },
+  { label: "Maintenance", href: "/maintenance", icon: Wrench },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Contact Messages", href: "/contact", icon: Mail },
   { label: "Live Chat", href: "/live-chat", icon: MessageCircle },
