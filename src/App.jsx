@@ -16,6 +16,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminBookings from "./pages/AdminBookings";
 import AdminReviews from "./pages/AdminReviews";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminMaintenance from "./pages/AdminMaintenance";
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
               <Route path="/destinations" element={<AdminDestinations />} />
               <Route path="/guides" element={<AdminGuides />} />
               <Route path="/reviews" element={<AdminReviews />} />
+              <Route path="/maintenance" element={<AdminMaintenance />} />
               <Route path="/contact" element={<AdminContactPage />} />
               <Route path="/live-chat" element={<AdminLiveChatPage />} />
             </Route>
