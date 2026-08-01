@@ -12,4 +12,12 @@ export default defineConfig({
   define: {
     global: "globalThis",
   },
+  esbuild: {
+    jsx: 'automatic',
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.js'],
+    globals: true,
+  },
 })

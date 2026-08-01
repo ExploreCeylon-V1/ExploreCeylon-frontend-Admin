@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 // Single router-level gate for every admin page — replaces the
 // isAdmin-then-navigate check that used to be copy-pasted into each

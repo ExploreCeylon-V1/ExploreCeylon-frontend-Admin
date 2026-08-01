@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import {
   ChevronDown, Menu, X, LogOut,
   LayoutDashboard, BarChart3, Users, CalendarCheck, Car, Compass,

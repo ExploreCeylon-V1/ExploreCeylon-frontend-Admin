@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ChevronDown, ChevronLeft, ChevronRight, Plus, List, Calendar, MapPin, X, UploadCloud, Loader2, Download
 } from "lucide-react";
@@ -146,10 +146,6 @@ export default function AdminEventsPage() {
   // ✅ FIX: gallery (multi) image upload state
   const [uploadingImages, setUploadingImages] = useState(false);
 
-  useEffect(() => {
-    loadAll();
-  }, []);
-
   const loadAll = async () => {
     try {
       setLoading(true);
@@ -163,6 +159,15 @@ export default function AdminEventsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Initial data fetch on mount. loadAll() sets state synchronously
+    // (setLoading(true)) before its first await, which the linter can't
+    // distinguish from a risky render loop — this is the standard "fetch on
+    // mount" effect pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadAll();
+  }, []);
 
   const today = useMemo(() => new Date(), []);
   const festivalsThisMonth = useMemo(() => events.filter((e) => {
