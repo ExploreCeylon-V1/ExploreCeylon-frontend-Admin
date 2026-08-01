@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { login as loginUser, isAdmin } from "../services/authService";
-import { useAuth } from "../context/AuthContext";
+import { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { login as loginUser } from "../services/authService";
+import { useAuth } from "../hooks/useAuth";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -12,15 +12,13 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isChecking, setIsChecking] = useState(true);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/");
-    } else {
-      setIsChecking(false);
-    }
-  }, [navigate]);
+  // AuthContext resolves auth state synchronously on first render now, so
+  // this can be a plain declarative redirect instead of an effect that sets
+  // local "isChecking" state.
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -49,17 +47,6 @@ export default function AdminLogin() {
     } finally {
       setLoading(false);
     }
-  }
-
-  if (isChecking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100">
-        <div className="text-center">
-          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600"></div>
-          <p className="mt-4 text-slate-600">Loading...</p>
-        </div>
-      </div>
-    );
   }
 
   return (

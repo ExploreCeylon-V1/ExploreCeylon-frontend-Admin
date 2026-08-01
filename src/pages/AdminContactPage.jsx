@@ -1,6 +1,6 @@
 // src/pages/AdminContactPage.jsx
-import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "../hooks/useAuth";
 import {
   getAllMessages,
   getUnreadMessages,
@@ -36,6 +36,10 @@ function Toast({ msg, onClose }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3000);
     return () => clearTimeout(t);
+    // Mount-only timer: `onClose` is a fresh inline function from the
+    // parent on every render, so including it would restart the 3s
+    // countdown on every parent re-render instead of firing once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <div
@@ -136,9 +140,14 @@ function MessageItem({ msg, isSelected, onClick }) {
 function MessageDetail({ msg, onReply, onDelete, replying, deleting }) {
   const [replyText, setReplyText] = useState(msg.adminReply || "");
 
-  useEffect(() => {
+  // Reset the draft reply when a different message is selected, or when its
+  // saved reply changes underneath us. Adjusted directly during render
+  // (React's recommended pattern) instead of in an effect.
+  const [trackedReply, setTrackedReply] = useState({ id: msg.id, adminReply: msg.adminReply });
+  if (trackedReply.id !== msg.id || trackedReply.adminReply !== msg.adminReply) {
+    setTrackedReply({ id: msg.id, adminReply: msg.adminReply });
     setReplyText(msg.adminReply || "");
-  }, [msg.id, msg.adminReply]);
+  }
 
   const mailtoHref =
     `mailto:${msg.email}` +
@@ -300,17 +309,12 @@ export default function AdminContactPage() {
   const [toast, setToast] = useState(null);
   const { isAuthenticated, loading: authLoading, logout } = useAuth();
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated) {
-      setMessages([]);
-      setLoading(false);
-      return;
-    }
-    loadMessages();
-  }, [filter, authLoading, isAuthenticated]);
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
 
-  async function loadMessages() {
+  const loadMessages = useCallback(async () => {
     setLoading(true);
     try {
       const data =
@@ -330,7 +334,21 @@ export default function AdminContactPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filter, logout]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      // Fetch-guard: bail out and clear stale data when logged out. This is
+      // part of the same data-fetching effect as the loadMessages() call
+      // below, not state derived purely from render inputs.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
+    loadMessages();
+  }, [filter, authLoading, isAuthenticated, loadMessages]);
 
   async function handleSelect(msg) {
     setSelected(msg);
@@ -341,7 +359,10 @@ export default function AdminContactPage() {
           prev.map((m) => (m.id === updated.id ? updated : m)),
         );
         setSelected(updated);
-      } catch {}
+      } catch {
+        // Best-effort: the message is still selected/readable even if the
+        // "mark as read" call fails, so there's nothing to surface here.
+      }
     }
   }
 
@@ -374,11 +395,6 @@ export default function AdminContactPage() {
     } finally {
       setDeleting(false);
     }
-  }
-
-  function showToast(msg) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
   }
 
   const unreadCount = messages.filter((m) => !m.isRead).length;

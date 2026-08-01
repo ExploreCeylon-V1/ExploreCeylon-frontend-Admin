@@ -62,7 +62,7 @@ export async function changePassword(current, next) {
       method: "POST",
       body: JSON.stringify({ currentPassword: current, newPassword: next }),
     });
-  } catch (err) {
+  } catch {
     // Fallback endpoint
     return await fetchWithAuth("/api/v1/users/me/change-password", {
       method: "POST",
