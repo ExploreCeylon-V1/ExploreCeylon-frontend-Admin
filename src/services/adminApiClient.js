@@ -75,10 +75,10 @@ export async function adminFetch(path, options = {}) {
     throw new Error(netErr.message || "Network error. Please check your connection.");
   }
 
-  // If 401 or 403 occurs on a protected endpoint and hasn't been retried yet
+  // If 401 occurs on a protected endpoint and hasn't been retried yet
   const isAuthEndpoint = path.includes("/api/v1/auth/");
   if (
-    (response.status === 401 || response.status === 403) &&
+    response.status === 401 &&
     !isAuthEndpoint &&
     !options._retried
   ) {

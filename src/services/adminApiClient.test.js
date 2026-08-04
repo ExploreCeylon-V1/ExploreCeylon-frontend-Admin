@@ -82,15 +82,30 @@ describe("adminApiClient", () => {
       );
     });
 
-    it("performs silent token refresh on 403 response and retries original request", async () => {
+    it("does not refresh token or clear auth storage on 403 response", async () => {
+      localStorage.setItem("ec_admin_token", "active-token");
+      localStorage.setItem("ec_admin_refresh_token", "valid-refresh-token");
+
+      globalThis.fetch.mockResolvedValueOnce(
+        mockJsonResponse({ error: "Forbidden access" }, { ok: false, status: 403 })
+      );
+
+      await expect(adminGet("/api/v1/admin/guides/bookings")).rejects.toThrow("Forbidden access");
+
+      expect(localStorage.getItem("ec_admin_token")).toBe("active-token");
+      expect(localStorage.getItem("ec_admin_refresh_token")).toBe("valid-refresh-token");
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("performs silent token refresh on 401 response and retries original request", async () => {
       localStorage.setItem("ec_admin_token", "expired-token");
       localStorage.setItem("ec_admin_refresh_token", "valid-refresh-token");
 
-      // 1st call: 403 Forbidden
+      // 1st call: 401 Unauthorized
       // 2nd call: Refresh endpoint -> returns new token
       // 3rd call: Retry original request -> returns 200 OK
       globalThis.fetch
-        .mockResolvedValueOnce(mockJsonResponse({ error: "Access Denied" }, { ok: false, status: 403 }))
+        .mockResolvedValueOnce(mockJsonResponse({ error: "Unauthorized" }, { ok: false, status: 401 }))
         .mockResolvedValueOnce(mockJsonResponse({ accessToken: "fresh-new-token" }, { ok: true, status: 200 }))
         .mockResolvedValueOnce(mockJsonResponse({ data: "success" }, { ok: true, status: 200 }));
 

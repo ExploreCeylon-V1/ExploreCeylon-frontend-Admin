@@ -29,7 +29,12 @@ export default function AdminVehicles() {
   const { token } = useAuth();
   
   const [vehicles, setVehicles] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    totalVehicles: 0,
+    availableVehicles: 0,
+    bookedVehicles: 0,
+    totalRevenue: 0,
+  });
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -234,10 +239,10 @@ export default function AdminVehicles() {
   };
 
   const totals = [
-    { label: "Total Vehicles", value: stats.totalVehicles, icon: "🚗", bgColor: "bg-blue-50" },
-    { label: "Available", value: stats.availableVehicles, accent: "text-emerald-600", icon: "✅", bgColor: "bg-emerald-50" },
-    { label: "Booked", value: stats.bookedVehicles, accent: "text-rose-600", icon: "📅", bgColor: "bg-rose-50" },
-    { label: "Total Revenue", value: `$${Math.round(stats.totalRevenue ?? 0).toLocaleString()}`, accent: "text-amber-600", icon: "💰", bgColor: "bg-amber-50" },
+    { label: "Total Vehicles", value: stats?.totalVehicles ?? 0, icon: "🚗", bgColor: "bg-blue-50" },
+    { label: "Available", value: stats?.availableVehicles ?? 0, accent: "text-emerald-600", icon: "✅", bgColor: "bg-emerald-50" },
+    { label: "Booked", value: stats?.bookedVehicles ?? 0, accent: "text-rose-600", icon: "📅", bgColor: "bg-rose-50" },
+    { label: "Total Revenue", value: `$${Math.round(stats?.totalRevenue ?? 0).toLocaleString()}`, accent: "text-amber-600", icon: "💰", bgColor: "bg-amber-50" },
   ];
 
   const filteredVehicles = vehicles.filter((vehicle) => {
