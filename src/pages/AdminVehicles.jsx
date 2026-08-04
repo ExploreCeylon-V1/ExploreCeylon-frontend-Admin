@@ -36,6 +36,9 @@ export default function AdminVehicles() {
     totalRevenue: 0,
   });
   
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("All Types");
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -44,7 +47,7 @@ export default function AdminVehicles() {
   const [showModal, setShowModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
