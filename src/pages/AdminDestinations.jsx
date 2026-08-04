@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronDown, Plus, Edit2, Trash2, Star, X, UploadCloud, Loader2, Download } from "lucide-react";
 import { uploadService } from "../services/uploadService";
 import DataTable from "../components/admin/DataTable";
@@ -110,22 +110,27 @@ export default function AdminDestinations() {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
 
-  useEffect(() => {
-    loadDestinations();
-  }, []);
-
   const loadDestinations = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await destinationService.getAll();
       setDestinations(data);
-    } catch (err) {
+    } catch {
       setError("Failed to load destinations");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Initial data fetch on mount. loadDestinations() sets state
+    // synchronously (setLoading(true)) before its first await, which the
+    // linter can't distinguish from a risky render loop — this is the
+    // standard "fetch on mount" effect pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadDestinations();
+  }, []);
 
   // ✅ Tab counts
   const counts = useMemo(() => ({
@@ -267,7 +272,7 @@ export default function AdminDestinations() {
       await destinationService.remove(id);
       setDeletingId(null);
       loadDestinations();
-    } catch (err) {
+    } catch {
       setError("Failed to delete destination");
     }
   };
@@ -276,7 +281,7 @@ export default function AdminDestinations() {
     try {
       await destinationService.toggleFeatured(id, !currentStatus);
       loadDestinations();
-    } catch (err) {
+    } catch {
       setError("Failed to update featured status");
     }
   };
@@ -285,7 +290,7 @@ export default function AdminDestinations() {
     try {
       await destinationService.toggleActive(id, !currentStatus);
       loadDestinations();
-    } catch (err) {
+    } catch {
       setError("Failed to update active status.");
     }
   };

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as guideService from "../services/guideService";
 import { uploadService } from "../services/uploadService"; // ⚠️ path එක oyaage folder structure එකට ගැලපෙන්න check කරන්න
 import ConfirmDialog from "../components/admin/ConfirmDialog";
@@ -43,9 +43,12 @@ export default function AdminGuides() {
 
   // Form states
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // These setters are used to drive timed side effects (finally-block
+  // resets, toast-style auto-clear) but the values themselves aren't
+  // rendered anywhere, so only the setter is kept.
+  const [, setLoading] = useState(false);
   const [formError, setFormError] = useState(null);
-  const [formSuccess, setFormSuccess] = useState(null);
+  const [, setFormSuccess] = useState(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
 
   // ✅ NEW: image upload states

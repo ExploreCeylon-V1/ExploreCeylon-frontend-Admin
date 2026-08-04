@@ -1,38 +1,46 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "./authContextInstance";
 
-const AuthContext = createContext(null);
+// Reads whatever was persisted by a previous session, synchronously, so the
+// provider's very first render already reflects auth state — no
+// "hydrate from localStorage in an effect" round trip (and no flash of
+// unauthenticated content while that effect runs).
+function getInitialAuthState() {
+  const t =
+    localStorage.getItem("ec_admin_token") ||
+    localStorage.getItem("exploreCeylonToken") ||
+    localStorage.getItem("token");
+  const u =
+    localStorage.getItem("ec_admin_user") ||
+    localStorage.getItem("exploreCeylonUser") ||
+    localStorage.getItem("user");
+
+  let token = null;
+  let user = null;
+  if (t && u) {
+    token = t;
+    try {
+      user = JSON.parse(u);
+    } catch {
+      localStorage.removeItem("ec_admin_token");
+      localStorage.removeItem("ec_admin_user");
+      localStorage.removeItem("exploreCeylonToken");
+      localStorage.removeItem("exploreCeylonUser");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
+  }
+  return { token, user };
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [auth, setAuth] = useState(getInitialAuthState);
+  const { token, user } = auth;
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const t =
-      localStorage.getItem("ec_admin_token") ||
-      localStorage.getItem("exploreCeylonToken") ||
-      localStorage.getItem("token");
-    const u =
-      localStorage.getItem("ec_admin_user") ||
-      localStorage.getItem("exploreCeylonUser") ||
-      localStorage.getItem("user");
-    if (t && u) {
-      try {
-        setToken(t);
-        setUser(JSON.parse(u));
-      } catch {
-        localStorage.removeItem("ec_admin_token");
-        localStorage.removeItem("ec_admin_user");
-        localStorage.removeItem("exploreCeylonToken");
-        localStorage.removeItem("exploreCeylonUser");
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-      }
-    }
-    setLoading(false);
-  }, []);
+  const setToken = (value) => setAuth((prev) => ({ ...prev, token: value }));
+  const setUser = (value) => setAuth((prev) => ({ ...prev, user: value }));
 
   const login = (newToken, newUser) => {
     setToken(newToken);
@@ -67,16 +75,14 @@ export function AuthProvider({ children }) {
         logout,
         isAuthenticated: !!token,
         isAdmin: user?.role === "ADMIN",
-        loading,
+        // Auth state is now derived synchronously on first render (see
+        // getInitialAuthState above), so there's no async hydration phase.
+        // Kept in the context value because AdminRoute / AdminContactPage
+        // still read it as a gate.
+        loading: false,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
-  return context;
 }

@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Lock, User, Camera, Eye, EyeOff, Save, Shield, Mail, Phone,
   CheckCircle, AlertCircle, X
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import * as profileService from "../services/profileService";
 
 // ─── Toast Component ──────────────────────────────────────────────────────────
@@ -234,7 +234,10 @@ export default function AdminSettings() {
           localStorage.setItem(key, JSON.stringify(u));
         }
       });
-    } catch {}
+    } catch {
+      // Best-effort local cache update — a failure here just means the
+      // sidebar/profile shows stale data until the next full refresh.
+    }
   };
 
   const handleProfileSave = async (e) => {
@@ -380,7 +383,7 @@ export default function AdminSettings() {
                     await profileService.deactivateAccount(pw);
                     showToast("success", "Account deactivated");
                     logout("/login");
-                  } catch (err) {
+                  } catch {
                     showToast("error", "Failed to deactivate account: check your password");
                   }
                 })();
