@@ -1,11 +1,8 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import { getAccessToken } from "../utils/authStorage";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-
-function getToken() {
-  return localStorage.getItem("ec_admin_token") || localStorage.getItem("exploreCeylonToken");
-}
 
 /**
  * Opens one STOMP-over-SockJS connection for the admin Live Chat page:
@@ -13,7 +10,7 @@ function getToken() {
  * conversation is opened, to that conversation's message stream.
  */
 export function connectAdminChatSocket({ onInboxUpdate, onConnect }) {
-  const token = getToken();
+  const token = getAccessToken();
 
   const client = new Client({
     webSocketFactory: () => new SockJS(`${API_BASE}/ws-chat?token=${encodeURIComponent(token)}`),

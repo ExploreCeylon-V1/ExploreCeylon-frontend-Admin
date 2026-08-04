@@ -4,8 +4,13 @@ import { uploadService } from "../services/uploadService";
 import DataTable from "../components/admin/DataTable";
 import ConfirmDialog from "../components/admin/ConfirmDialog";
 import { UploadCloud, Loader2, X } from "lucide-react";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+import {
+  getLocalVehicles,
+  getVehicleStats,
+  updateVehicleStatus,
+  deleteVehicle,
+} from "../services/vehicleService";
+import { adminMutate } from "../services/adminApiClient";
 
 const VEHICLE_TYPES = [
   "CAR", "VAN", "SUV", "TUKTUK", "SCOOTER", "BUS", "MINIVAN",
@@ -24,47 +29,31 @@ export default function AdminVehicles() {
   const { token } = useAuth();
   
   const [vehicles, setVehicles] = useState([]);
-  const [stats, setStats] = useState({
-    totalVehicles: 0,
-    availableVehicles: 0,
-    bookedVehicles: 0,
-    totalRevenue: 0,
-  });
+  const [stats, setStats] = useState(null);
   
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [uploadingImages, setUploadingImages] = useState(false);
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("All Types");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "",
+    title: "",
     type: "CAR",
-    brand: "",
-    model: "",
-    year: "",
-    seats: "",
-    color: "",
-    latitude: "",
-    longitude: "",
-    imageUrls: [],
-    licensePlate: "",
-    pricePerDay: "",
-    currency: "USD",
     district: "Colombo",
-    pickupLocation: "",
+    transmission: "AUTOMATIC",
+    seats: 4,
+    luggage: 2,
+    pricePerDay: 5000,
+    imageUrl: "",
     driverName: "",
     driverPhone: "",
-    whatsappNumber: "",
-    driverLanguages: "",
-    driverIncluded: false,
+    licensePlate: "",
+    driverIncluded: true,
     available: true,
     description: "",
     category: "STANDARD",
@@ -76,31 +65,12 @@ export default function AdminVehicles() {
         setLoading(true);
         setError(null);
 
-        // Fetch vehicles (public endpoint)
-        const vehiclesRes = await fetch(`${API_BASE}/api/v1/vehicles/local`, {
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!vehiclesRes.ok) {
-          throw new Error(`Failed to load vehicles: ${vehiclesRes.status}`);
-        }
-
-        const vehiclesData = await vehiclesRes.json();
+        const vehiclesData = await getLocalVehicles();
         setVehicles(vehiclesData);
 
-        // Fetch stats (requires auth token)
         if (token) {
-          const statsRes = await fetch(`${API_BASE}/api/v1/admin/stats/vehicles`, {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (statsRes.ok) {
-            const statsData = await statsRes.json();
-            setStats(statsData);
-          }
+          const statsData = await getVehicleStats();
+          setStats(statsData);
         }
       } catch (err) {
         setError(err.message || "Failed to load data");
@@ -228,30 +198,13 @@ export default function AdminVehicles() {
         category: formData.category,
       };
 
-      const response = await fetch(`${API_BASE}${endpoint}`, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Failed to ${editingVehicle ? "update" : "create"} vehicle`);
-      }
+      await adminMutate(endpoint, method, body);
 
       setSuccessMessage(`Vehicle ${editingVehicle ? "updated" : "created"} successfully!`);
       setShowModal(false);
 
-      // Reload vehicles
-      const vehiclesRes = await fetch(`${API_BASE}/api/v1/vehicles/local`, {
-        headers: { "Content-Type": "application/json" },
-      });
-      if (vehiclesRes.ok) {
-        setVehicles(await vehiclesRes.json());
-      }
+      const refreshed = await getLocalVehicles();
+      setVehicles(refreshed);
     } catch (err) {
       setError(err.message || "Operation failed");
     } finally {
@@ -261,25 +214,7 @@ export default function AdminVehicles() {
 
   const handleToggleStatus = async (vehicleId, currentStatus) => {
     try {
-      if (!token) {
-        setError("Not authenticated. Please log in.");
-        return;
-      }
-
-      const response = await fetch(`${API_BASE}/api/v1/admin/vehicles/${vehicleId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ available: !currentStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update vehicle status");
-      }
-
-      // Update local state
+      await updateVehicleStatus(vehicleId, !currentStatus);
       setVehicles(vehicles.map((v) =>
         v.id === vehicleId ? { ...v, available: !currentStatus } : v
       ));
@@ -290,22 +225,7 @@ export default function AdminVehicles() {
 
   const handleDelete = async (vehicleId) => {
     try {
-      if (!token) {
-        setError("Not authenticated. Please log in.");
-        return;
-      }
-
-      const response = await fetch(`${API_BASE}/api/v1/admin/vehicles/${vehicleId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete vehicle");
-      }
-
+      await deleteVehicle(vehicleId);
       setVehicles(vehicles.filter((v) => v.id !== vehicleId));
       setDeleteConfirm(null);
     } catch (err) {

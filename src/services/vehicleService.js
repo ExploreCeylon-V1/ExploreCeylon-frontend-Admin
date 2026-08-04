@@ -1,34 +1,18 @@
-import { getToken } from "./authService";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+import {
+  adminGet,
+  adminPatch,
+  adminDelete,
+} from "./adminApiClient";
 
 export async function getLocalVehicles() {
-  const response = await fetch(`${API_BASE}/api/v1/vehicles/local`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to load vehicles: ${response.status}`);
-  }
-
-  return response.json();
+  return adminGet("/api/v1/vehicles/local");
 }
 
 export async function getVehicleStats() {
-  const token = getToken();
-
-  const response = await fetch(`${API_BASE}/api/v1/admin/stats/vehicles`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-  });
-
-  if (!response.ok) {
-    console.error(`Failed to load vehicle stats: ${response.status}`);
-    // Fallback: return default stats when endpoint fails
+  try {
+    return await adminGet("/api/v1/admin/stats/vehicles");
+  } catch (err) {
+    console.error("Failed to load vehicle stats:", err);
     return {
       totalVehicles: 0,
       availableVehicles: 0,
@@ -37,6 +21,12 @@ export async function getVehicleStats() {
       totalCommission: 0,
     };
   }
+}
 
-  return response.json();
+export async function updateVehicleStatus(vehicleId, available) {
+  return adminPatch(`/api/v1/admin/vehicles/${vehicleId}`, { available });
+}
+
+export async function deleteVehicle(vehicleId) {
+  return adminDelete(`/api/v1/admin/vehicles/${vehicleId}`);
 }

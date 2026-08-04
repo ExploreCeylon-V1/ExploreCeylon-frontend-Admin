@@ -4,78 +4,8 @@ import { uploadService } from "../services/uploadService";
 import DataTable from "../components/admin/DataTable";
 import SearchBar from "../components/admin/SearchBar";
 import ConfirmDialog from "../components/admin/ConfirmDialog";
-import { downloadCsv } from "../utils/csvExport";
+import { downloadCsv } from "../utils/csvExport";import * as destinationService from "../services/destinationService";
 
-const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) 
-  ? import.meta.env.VITE_API_BASE_URL 
-  : "http://localhost:8080";
-
-function getAuthToken() {
-  return localStorage.getItem("ec_admin_token") || localStorage.getItem("exploreCeylonToken");
-}
-
-function getAuthHeader() {
-  const token = getAuthToken();
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
-}
-
-const destinationService = {
-  // ✅ FIX: includeAll=true add කළා — inactive ඒවත් backend return කරයි
-  getAll: async () => {
-    const params = new URLSearchParams();
-    params.append("includeAll", "true");
-    params.append("t", Date.now().toString()); // cache bust
-
-    const response = await fetch(`${API_BASE}/api/v1/destinations?${params.toString()}`, {
-      headers: getAuthHeader(),
-      cache: "no-store",
-    });
-    if (!response.ok) throw new Error(`Failed to fetch destinations`);
-    return await response.json();
-  },
-  create: async (payload) => {
-    const response = await fetch(`${API_BASE}/api/v1/destinations`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...getAuthHeader() },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) throw new Error(`Failed to create destination`);
-    return await response.json();
-  },
-  update: async (id, payload) => {
-    const response = await fetch(`${API_BASE}/api/v1/destinations/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", ...getAuthHeader() },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) throw new Error(`Failed to update destination`);
-    return await response.json();
-  },
-  remove: async (id) => {
-    const response = await fetch(`${API_BASE}/api/v1/destinations/${id}`, {
-      method: "DELETE",
-      headers: getAuthHeader(),
-    });
-    if (!response.ok) throw new Error(`Failed to delete destination`);
-  },
-  toggleFeatured: async (id, featured) => {
-    const response = await fetch(`${API_BASE}/api/v1/destinations/${id}/featured?featured=${featured}`, {
-      method: "PUT",
-      headers: getAuthHeader(),
-    });
-    if (!response.ok) throw new Error(`Failed to toggle featured`);
-    return await response.json();
-  },
-  toggleActive: async (id, active) => {
-    const response = await fetch(`${API_BASE}/api/v1/destinations/${id}/active?active=${active}`, {
-      method: "PUT",
-      headers: getAuthHeader(),
-    });
-    if (!response.ok) throw new Error(`Failed to toggle active status`);
-    return await response.json().catch(() => ({}));
-  }
-};
 
 const DEFAULT_FORM = {
   name: "", shortDescription: "", description: "", district: "", province: "",
