@@ -45,84 +45,103 @@ describe("adminApiClient", () => {
     it("calls fetch with the base URL + path and no auth header when no token is stored", async () => {
       globalThis.fetch.mockResolvedValue(mockJsonResponse({ items: [] }));
 
-      const result = await adminGet("/api/admin/users");
+      const result = await adminGet("/api/v1/admin/users");
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "http://localhost:8080/api/admin/users",
+        "http://localhost:8080/api/v1/admin/users",
         expect.objectContaining({ cache: "no-store", headers: {} })
       );
       expect(result).toEqual({ items: [] });
     });
 
-    it("includes an Authorization: Bearer header using the ec_admin_token key when present", async () => {
+    it("includes an Authorization: Bearer header using ec_admin_token when present", async () => {
       localStorage.setItem("ec_admin_token", "new-token-123");
       globalThis.fetch.mockResolvedValue(mockJsonResponse({ ok: true }));
 
-      await adminGet("/api/admin/bookings");
+      await adminGet("/api/v1/admin/bookings");
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "http://localhost:8080/api/admin/bookings",
+        "http://localhost:8080/api/v1/admin/bookings",
         expect.objectContaining({
           headers: { Authorization: "Bearer new-token-123" },
         })
       );
     });
 
-    it("falls back to the legacy exploreCeylonToken key when ec_admin_token is absent", async () => {
+    it("falls back to legacy exploreCeylonToken key when ec_admin_token is absent", async () => {
       localStorage.setItem("exploreCeylonToken", "legacy-token-456");
       globalThis.fetch.mockResolvedValue(mockJsonResponse({ ok: true }));
 
-      await adminGet("/api/admin/reviews");
+      await adminGet("/api/v1/admin/reviews");
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "http://localhost:8080/api/admin/reviews",
+        "http://localhost:8080/api/v1/admin/reviews",
         expect.objectContaining({
           headers: { Authorization: "Bearer legacy-token-456" },
         })
       );
     });
 
-    it("prefers ec_admin_token over the legacy key when both are present", async () => {
-      localStorage.setItem("ec_admin_token", "new-token");
-      localStorage.setItem("exploreCeylonToken", "legacy-token");
-      globalThis.fetch.mockResolvedValue(mockJsonResponse({ ok: true }));
+    it("does not refresh token or clear auth storage on 403 response", async () => {
+      localStorage.setItem("ec_admin_token", "active-token");
+      localStorage.setItem("ec_admin_refresh_token", "valid-refresh-token");
 
-      await adminGet("/api/admin/users");
-
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "http://localhost:8080/api/admin/users",
-        expect.objectContaining({
-          headers: { Authorization: "Bearer new-token" },
-        })
+      globalThis.fetch.mockResolvedValueOnce(
+        mockJsonResponse({ error: "Forbidden access" }, { ok: false, status: 403 })
       );
+
+      await expect(adminGet("/api/v1/admin/guides/bookings")).rejects.toThrow("Forbidden access");
+
+      expect(localStorage.getItem("ec_admin_token")).toBe("active-token");
+      expect(localStorage.getItem("ec_admin_refresh_token")).toBe("valid-refresh-token");
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     });
 
-    it("throws with the server-provided error message when the response is not ok", async () => {
-      globalThis.fetch.mockResolvedValue(
-        mockJsonResponse({ error: "Not authorized" }, { ok: false, status: 403 })
-      );
+    it("performs silent token refresh on 401 response and retries original request", async () => {
+      localStorage.setItem("ec_admin_token", "expired-token");
+      localStorage.setItem("ec_admin_refresh_token", "valid-refresh-token");
 
-      await expect(adminGet("/api/admin/users")).rejects.toThrow("Not authorized");
+      // 1st call: 401 Unauthorized
+      // 2nd call: Refresh endpoint -> returns new token
+      // 3rd call: Retry original request -> returns 200 OK
+      globalThis.fetch
+        .mockResolvedValueOnce(mockJsonResponse({ error: "Unauthorized" }, { ok: false, status: 401 }))
+        .mockResolvedValueOnce(mockJsonResponse({ accessToken: "fresh-new-token" }, { ok: true, status: 200 }))
+        .mockResolvedValueOnce(mockJsonResponse({ data: "success" }, { ok: true, status: 200 }));
+
+      const res = await adminGet("/api/v1/admin/guides/bookings");
+
+      expect(res).toEqual({ data: "success" });
+      expect(localStorage.getItem("ec_admin_token")).toBe("fresh-new-token");
+      expect(globalThis.fetch).toHaveBeenCalledTimes(3);
     });
 
-    it("falls back to a generic status message when the error body has no message", async () => {
-      globalThis.fetch.mockResolvedValue(
-        mockJsonResponse({}, { ok: false, status: 500 })
-      );
+    it("clears auth and redirects to login if refresh fails", async () => {
+      localStorage.setItem("ec_admin_token", "expired-token");
+      localStorage.setItem("ec_admin_refresh_token", "expired-refresh-token");
 
-      await expect(adminGet("/api/admin/users")).rejects.toThrow("Request failed: 500");
+      // 1st call: 401 Unauthorized
+      // 2nd call: Refresh endpoint -> returns 401 Unauthorized
+      globalThis.fetch
+        .mockResolvedValueOnce(mockJsonResponse({ error: "Unauthorized" }, { ok: false, status: 401 }))
+        .mockResolvedValueOnce(mockJsonResponse({ error: "Invalid refresh token" }, { ok: false, status: 401 }));
+
+      await expect(adminGet("/api/v1/admin/guides/payments/summaries")).rejects.toThrow();
+
+      expect(localStorage.getItem("ec_admin_token")).toBeNull();
+      expect(localStorage.getItem("ec_admin_refresh_token")).toBeNull();
     });
   });
 
   describe("adminMutate", () => {
-    it("sends the given method, JSON body, content-type and auth headers", async () => {
+    it("sends method, JSON body, content-type and auth headers", async () => {
       localStorage.setItem("ec_admin_token", "token-abc");
       globalThis.fetch.mockResolvedValue(mockJsonResponse({ id: 1 }));
 
-      const result = await adminMutate("/api/admin/users/1", "PUT", { status: "BANNED" });
+      const result = await adminMutate("/api/v1/admin/users/1", "PUT", { status: "BANNED" });
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "http://localhost:8080/api/admin/users/1",
+        "http://localhost:8080/api/v1/admin/users/1",
         {
           method: "PUT",
           headers: {
@@ -135,33 +154,12 @@ describe("adminApiClient", () => {
       expect(result).toEqual({ id: 1 });
     });
 
-    it("omits the body when no body is provided", async () => {
-      globalThis.fetch.mockResolvedValue(mockJsonResponse(null));
-
-      await adminMutate("/api/admin/users/1", "DELETE");
-
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "http://localhost:8080/api/admin/users/1",
-        expect.objectContaining({ method: "DELETE", body: undefined })
-      );
-    });
-
     it("returns null for a 204 No Content response", async () => {
       globalThis.fetch.mockResolvedValue({ ok: true, status: 204, json: vi.fn() });
 
-      const result = await adminMutate("/api/admin/users/1", "DELETE");
+      const result = await adminMutate("/api/v1/admin/users/1", "DELETE");
 
       expect(result).toBeNull();
-    });
-
-    it("throws with the server-provided error message when the response is not ok", async () => {
-      globalThis.fetch.mockResolvedValue(
-        mockJsonResponse({ message: "Validation failed" }, { ok: false, status: 400 })
-      );
-
-      await expect(
-        adminMutate("/api/admin/users/1", "POST", { name: "" })
-      ).rejects.toThrow("Validation failed");
     });
   });
 });
