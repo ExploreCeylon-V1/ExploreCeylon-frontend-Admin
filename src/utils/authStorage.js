@@ -7,10 +7,12 @@ export const USER_KEY = "ec_admin_user";
  * Standardizes storage under ec_admin_* keys while clearing legacy keys.
  */
 export function saveAuth(token, user, refreshToken = null) {
+  const existingRefreshToken = getRefreshToken();
+  const tokenToKeep = refreshToken || existingRefreshToken;
   clearAuth();
   if (token) localStorage.setItem(TOKEN_KEY, token);
   if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
-  if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  if (tokenToKeep) localStorage.setItem(REFRESH_TOKEN_KEY, tokenToKeep);
 }
 
 /**

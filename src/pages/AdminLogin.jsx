@@ -33,13 +33,17 @@ export default function AdminLogin() {
         throw new Error("Access denied. Admin accounts only.");
       }
 
-      contextLogin(data.accessToken, {
-        id: data.userId,
-        name: data.name || "",
-        email: data.email || "",
-        role: data.role || "ADMIN",
-        avatarUrl: data.avatarUrl,
-      });
+      contextLogin(
+        data.accessToken,
+        {
+          id: data.userId,
+          name: data.name || "",
+          email: data.email || "",
+          role: data.role || "ADMIN",
+          avatarUrl: data.avatarUrl,
+        },
+        data.refreshToken
+      );
 
       navigate("/");
     } catch (err) {
