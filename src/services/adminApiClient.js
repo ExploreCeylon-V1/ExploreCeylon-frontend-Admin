@@ -98,6 +98,9 @@ export async function adminFetch(path, options = {}) {
       if (typeof window !== "undefined" && window.location && window.location.pathname !== "/login") {
         try {
           window.location.href = "/login";
+          // Suppress promise rejection propagation while the page is navigating away
+          // so React components do not render flash error states like "Session expired".
+          return new Promise(() => {});
         } catch {
           // Ignore jsdom navigation limitations in test environments
         }
