@@ -21,6 +21,7 @@ const navItems = [
   { label: "Maintenance", href: "/maintenance", icon: Wrench },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Contact Messages", href: "/contact", icon: Mail },
+  { label: "Subscribe Emails", href: "/subscribe-emails", icon: Mail },
   { label: "Live Chat", href: "/live-chat", icon: MessageCircle },
 ];
 
