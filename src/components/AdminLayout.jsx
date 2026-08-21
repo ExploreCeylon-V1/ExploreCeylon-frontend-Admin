@@ -24,8 +24,8 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-slate-100 font-sans">
       <AdminSidebar />
-      {/* md:ml-64 reserves space for the fixed left-side sidebar */}
-      <div className="flex flex-col min-h-screen md:ml-64">
+      {/* lg:ml-64 reserves space for the fixed left-side sidebar on desktop (>=1024px); mobile & tablet (<1024px) use full width with drawer */}
+      <div className="flex flex-col min-h-screen lg:ml-64">
         <main className="flex-1">
           <Outlet />
         </main>

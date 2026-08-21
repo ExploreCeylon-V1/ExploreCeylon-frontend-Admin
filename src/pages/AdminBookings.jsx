@@ -187,25 +187,22 @@ export default function AdminBookings() {
     {
       key: "customerName", label: "Customer", sortable: false,
       render: (b) => (
-        <div>
-          <p className="font-medium text-slate-900">{b.customerName}</p>
-          <p className="text-xs text-slate-400">{b.customerEmail}</p>
+        <div className="min-w-0">
+          <p className="font-medium text-slate-900 text-xs sm:text-sm truncate">{b.customerName}</p>
+          <p className="text-xs text-slate-400 truncate">{b.customerEmail}</p>
         </div>
       ),
     },
-    { key: "providerName", label: "Provider", render: (b) => b.providerName },
-    { key: "startDate", label: "Dates", sortable: true, render: (b) => `${formatDate(b.startDate)} → ${formatDate(b.endDate)}` },
+    { key: "providerName", label: "Provider", hideOnMobile: true, render: (b) => b.providerName },
+    { key: "startDate", label: "Dates", hideOnMobile: true, sortable: true, render: (b) => `${formatDate(b.startDate)} → ${formatDate(b.endDate)}` },
     { key: "totalCost", label: "Total", sortable: true, render: (b) => `$${b.totalCost?.toFixed(2)}` },
     { key: "status", label: "Status", sortable: true, render: (b) => <StatusBadge value={b.status} /> },
     {
       key: "actions", label: "Actions",
       render: (b) => (
-        <div className="flex items-center gap-1">
-          <button onClick={() => setDetailBooking(b)} className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">View</button>
-          {b.status !== "CANCELLED" && b.status !== "COMPLETED" && (
-            <button onClick={() => setPendingAction({ type: "cancel", booking: b })} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Cancel</button>
-          )}
-        </div>
+        <button onClick={() => setDetailBooking(b)} className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 underline">
+          Details
+        </button>
       ),
     },
   ];
@@ -214,41 +211,47 @@ export default function AdminBookings() {
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <div className="min-h-screen px-4 py-5 xl:px-10 xl:py-8">
         <main>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Booking Management</h1>
-              <p className="text-sm text-slate-500 mt-1">{pageData.totalElements} vehicle and guide bookings</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Booking Management</h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">{pageData.totalElements} vehicle and guide bookings</p>
             </div>
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-xl text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-60 self-start sm:self-auto"
             >
               <Download size={15} /> {exporting ? "Exporting…" : "Export CSV"}
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <SearchBar value={search} onChange={setSearch} placeholder="Search by customer or provider..." />
-            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="ALL">All Types</option>
-              <option value="VEHICLE">Vehicle</option>
-              <option value="GUIDE">Guide</option>
-            </select>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="ALL">All Statuses</option>
-              <option value="PENDING_PAYMENT">Pending Payment</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <span className="text-slate-400 text-sm">to</span>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center justify-between gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+              <SearchBar value={search} onChange={setSearch} placeholder="Search by customer or provider..." />
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+                <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="ALL">All Types</option>
+                  <option value="VEHICLE">Vehicle</option>
+                  <option value="GUIDE">Guide</option>
+                </select>
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="ALL">All Statuses</option>
+                  <option value="PENDING_PAYMENT">Pending Payment</option>
+                  <option value="CONFIRMED">Confirmed</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full sm:w-36 px-2.5 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                <span className="text-slate-400 text-xs sm:text-sm shrink-0">to</span>
+                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full sm:w-36 px-2.5 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+            </div>
           </div>
 
           {actionError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex justify-between">
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs sm:text-sm flex justify-between">
               <span>{actionError}</span><button onClick={() => setActionError(null)}><X size={16} /></button>
             </div>
           )}
@@ -293,13 +296,13 @@ export default function AdminBookings() {
       </div>
 
       {detailBooking && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-3 sm:p-4">
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-8 py-5 flex items-center justify-between z-10 rounded-t-3xl">
-              <h2 className="text-xl font-bold text-slate-900">Booking Details</h2>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between z-10 rounded-t-3xl">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">Booking Details</h2>
               <button onClick={() => setDetailBooking(null)} className="text-slate-400 hover:text-slate-600 p-1 transition"><X size={20} /></button>
             </div>
-            <div className="p-8 space-y-5">
+            <div className="p-5 sm:p-8 space-y-4 sm:space-y-5">
               <div className="flex items-center gap-2">
                 <TypeBadge type={detailBooking.type} />
                 <StatusBadge value={detailBooking.status} />
@@ -307,28 +310,28 @@ export default function AdminBookings() {
 
               <div>
                 <p className="text-slate-400 text-xs uppercase mb-1">Customer</p>
-                <p className="font-medium text-slate-900">{detailBooking.customerName}</p>
-                <p className="text-sm text-slate-500">{detailBooking.customerEmail}</p>
+                <p className="font-medium text-slate-900 text-sm sm:text-base">{detailBooking.customerName}</p>
+                <p className="text-xs sm:text-sm text-slate-500">{detailBooking.customerEmail}</p>
               </div>
 
               <div>
                 <p className="text-slate-400 text-xs uppercase mb-1">Provider</p>
-                <p className="font-medium text-slate-900 flex items-center gap-1.5">
+                <p className="font-medium text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                   {detailBooking.type === "VEHICLE" ? <Car size={14} /> : <UsersIcon size={14} />}
                   {detailBooking.providerName}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><p className="text-slate-400 text-xs uppercase mb-1">Start</p><p className="text-slate-700">{formatDate(detailBooking.startDate)}</p></div>
-                <div><p className="text-slate-400 text-xs uppercase mb-1">End</p><p className="text-slate-700">{formatDate(detailBooking.endDate)}</p></div>
-                <div><p className="text-slate-400 text-xs uppercase mb-1">Total Cost</p><p className="text-slate-700 font-semibold">${detailBooking.totalCost?.toFixed(2)}</p></div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                <div><p className="text-slate-400 text-[10px] sm:text-xs uppercase mb-1 font-semibold">Start</p><p className="text-slate-700">{formatDate(detailBooking.startDate)}</p></div>
+                <div><p className="text-slate-400 text-[10px] sm:text-xs uppercase mb-1 font-semibold">End</p><p className="text-slate-700">{formatDate(detailBooking.endDate)}</p></div>
+                <div><p className="text-slate-400 text-[10px] sm:text-xs uppercase mb-1 font-semibold">Total Cost</p><p className="text-slate-700 font-semibold">${detailBooking.totalCost?.toFixed(2)}</p></div>
                 <div>
-                  <p className="text-slate-400 text-xs uppercase mb-1">Related Trip</p>
+                  <p className="text-slate-400 text-[10px] sm:text-xs uppercase mb-1 font-semibold">Related Trip</p>
                   {detailBooking.tripId ? (
                     <p className="text-slate-700">Trip #{detailBooking.tripId}</p>
                   ) : (
-                    <p className="text-slate-400 flex items-center gap-1"><MapPin size={13} /> Not linked to a trip</p>
+                    <p className="text-slate-400 flex items-center gap-1"><MapPin size={13} /> Not linked</p>
                   )}
                 </div>
               </div>
@@ -337,7 +340,7 @@ export default function AdminBookings() {
                 <div className="pt-4 border-t border-slate-100">
                   <button
                     onClick={() => setPendingAction({ type: "cancel", booking: detailBooking })}
-                    className="w-full px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition text-sm font-medium"
+                    className="w-full px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition text-xs sm:text-sm font-medium"
                   >
                     Cancel Booking
                   </button>

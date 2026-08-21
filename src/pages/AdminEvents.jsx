@@ -84,43 +84,47 @@ function CalendarView({ events, year, month }) {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-200">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-        {DAYS_OF_WEEK.map((d) => (
-          <div key={d} style={{ padding: "10px 0", textAlign: "center", fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", borderRight: "1px solid #e2e8f0" }}>
-            {d}
-          </div>
-        ))}
-      </div>
-      {weeks.map((week, wi) => (
-        <div key={wi} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid #f1f5f9" }}>
-          {week.map((day, di) => {
-            const dayEvs = day ? eventsOnDay(day) : [];
-            const isT = day ? isToday(day) : false;
-            return (
-              <div key={di} style={{ minHeight: "110px", borderRight: "1px solid #f1f5f9", padding: "6px", backgroundColor: day ? (isT ? "#f0fdf4" : "#ffffff") : "#f8fafc", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                {day && (
-                  <>
-                    <div style={{ width: "24px", height: "24px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: isT ? 700 : 500, marginBottom: "4px", flexShrink: 0, backgroundColor: isT ? "#059669" : "transparent", color: isT ? "#ffffff" : "#64748b" }}>
-                      {day}
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
-                      {dayEvs.slice(0, 2).map((ev) => {
-                        const m = getCategoryMeta(ev.category);
-                        return (
-                          <div key={ev.id} title={ev.title} style={{ fontSize: "10px", padding: "1px 5px", borderRadius: "3px", borderLeft: `2px solid ${m.color.split("-")[1]}`, backgroundColor: m.bg.replace("100", "50"), color: m.color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontWeight: 500 }}>
-                            {ev.title}
-                          </div>
-                        );
-                      })}
-                      {dayEvs.length > 2 && <div style={{ fontSize: "10px", color: "#94a3b8", paddingLeft: "4px" }}>+{dayEvs.length - 2} more</div>}
-                    </div>
-                  </>
-                )}
+      <div className="overflow-x-auto">
+        <div className="min-w-[660px] sm:min-w-full">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+            {DAYS_OF_WEEK.map((d) => (
+              <div key={d} style={{ padding: "10px 0", textAlign: "center", fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", borderRight: "1px solid #e2e8f0" }}>
+                {d}
               </div>
-            );
-          })}
+            ))}
+          </div>
+          {weeks.map((week, wi) => (
+            <div key={wi} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid #f1f5f9" }}>
+              {week.map((day, di) => {
+                const dayEvs = day ? eventsOnDay(day) : [];
+                const isT = day ? isToday(day) : false;
+                return (
+                  <div key={di} style={{ minHeight: "110px", borderRight: "1px solid #f1f5f9", padding: "6px", backgroundColor: day ? (isT ? "#f0fdf4" : "#ffffff") : "#f8fafc", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                    {day && (
+                      <>
+                        <div style={{ width: "24px", height: "24px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: isT ? 700 : 500, marginBottom: "4px", flexShrink: 0, backgroundColor: isT ? "#059669" : "transparent", color: isT ? "#ffffff" : "#64748b" }}>
+                          {day}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
+                          {dayEvs.slice(0, 2).map((ev) => {
+                            const m = getCategoryMeta(ev.category);
+                            return (
+                              <div key={ev.id} title={ev.title} className="truncate" style={{ fontSize: "10px", padding: "1px 5px", borderRadius: "3px", borderLeft: `2px solid ${m.color.split("-")[1]}`, backgroundColor: m.bg.replace("100", "50"), color: m.color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontWeight: 500 }}>
+                                {ev.title}
+                              </div>
+                            );
+                          })}
+                          {dayEvs.length > 2 && <div style={{ fontSize: "10px", color: "#94a3b8", paddingLeft: "4px" }}>+{dayEvs.length - 2} more</div>}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 }
@@ -150,41 +154,32 @@ export default function AdminEventsPage() {
     try {
       setLoading(true);
       setError(null);
-      const [all, up] = await Promise.all([eventService.getAllEvents(), eventService.getUpcomingEvents()]);
-      setEvents(all);
-      setUpcoming(up);
-    } catch (err) {
-      setError(err?.message ?? "Failed to load events");
+      const [allEvs, upEvs] = await Promise.all([
+        eventService.getAllEvents(),
+        eventService.getUpcomingEvents(),
+      ]);
+      setEvents(allEvs);
+      setUpcoming(upEvs);
+    } catch {
+      setError("Failed to load events");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Initial data fetch on mount. loadAll() sets state synchronously
-    // (setLoading(true)) before its first await, which the linter can't
-    // distinguish from a risky render loop — this is the standard "fetch on
-    // mount" effect pattern.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll();
   }, []);
 
-  const today = useMemo(() => new Date(), []);
-  const festivalsThisMonth = useMemo(() => events.filter((e) => {
-    if (!e.startDate) return false;
-    const [year, month, day] = e.startDate.split("-").map(Number);
-    const d = new Date(year, month - 1, day);
-    return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear() && (e.category === "FESTIVAL" || e.category === "RELIGIOUS");
-  }), [events, today]);
-
-  const nextEvent = useMemo(() => [...upcoming].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0], [upcoming]);
-
   const filtered = useMemo(() => {
     return events.filter((ev) => {
-      const matchSearch = (ev.title ?? "").toLowerCase().includes(searchTerm.toLowerCase()) || (ev.region ?? "").toLowerCase().includes(searchTerm.toLowerCase());
-      const matchCat = catFilter === "ALL" || ev.category === catFilter;
-      const matchDist = distFilter === "ALL" || ev.region === distFilter;
-      return matchSearch && matchCat && matchDist;
+      const matchesSearch =
+        (ev.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (ev.region || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (ev.location || "").toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCat = catFilter === "ALL" || ev.category === catFilter;
+      const matchesDist = distFilter === "ALL" || ev.region === distFilter;
+      return matchesSearch && matchesCat && matchesDist;
     });
   }, [events, searchTerm, catFilter, distFilter]);
 
@@ -220,41 +215,34 @@ export default function AdminEventsPage() {
     setSubmitting(true);
     try {
       const payload = {
-        title: formData.name, description: formData.description, category: formData.category,
-        region: formData.district, location: formData.location, startDate: formData.startDate,
-        endDate: formData.endDate, status: formData.status, featured: formData.featured,
-        imageUrls: formData.imageUrls, // ✅ FIX: backend expects "imageUrls" (List<String>)
+        title: formData.name, category: formData.category, region: formData.district,
+        location: formData.location, startDate: formData.startDate, endDate: formData.endDate,
+        status: formData.status, featured: formData.featured, description: formData.description,
+        imageUrls: formData.imageUrls,
       };
-      if (editingId) await eventService.updateEvent(editingId, payload);
-      else await eventService.createEvent(payload);
-      
+
+      if (editingId) {
+        await eventService.updateEvent(editingId, payload);
+      } else {
+        await eventService.createEvent(payload);
+      }
       closeModal();
       await loadAll();
     } catch (err) {
-      setError(err?.message ?? "Failed to save event");
+      setError(err?.message || "Failed to save event");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleEdit = (ev) => {
-    setFormData({
-      name: ev.title || "", description: ev.description || "", category: ev.category || "CULTURAL",
-      district: ev.region || "", location: ev.location || "", startDate: ev.startDate || "",
-      endDate: ev.endDate || "", status: ev.status || "DRAFT", featured: ev.featured || false,
-      imageUrls: ev.imageUrls || [], // ✅ FIX
-    });
-    setEditingId(ev.id);
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
+    if (!deletingId) return;
     try {
-      await eventService.deleteEvent(id);
+      await eventService.deleteEvent(deletingId);
       setDeletingId(null);
       await loadAll();
     } catch (err) {
-      setError(err?.message ?? "Failed to delete event");
+      setError(err?.message || "Failed to delete event");
     }
   };
 
@@ -264,20 +252,41 @@ export default function AdminEventsPage() {
     setFormData(DEFAULT_FORM);
   };
 
+  const handleEditClick = (ev) => {
+    setEditingId(ev.id);
+    setFormData({
+      name: ev.title || "", category: ev.category || "FESTIVAL",
+      district: ev.region || "", location: ev.location || "",
+      startDate: ev.startDate || "", endDate: ev.endDate || "",
+      status: ev.status || "DRAFT", featured: ev.featured || false,
+      description: ev.description || "", imageUrls: ev.imageUrls || [],
+    });
+    setShowModal(true);
+  };
+
   const prevMonth = () => {
-    if (calMonth === 0) { setCalMonth(11); setCalYear((y) => y - 1); } else setCalMonth((m) => m - 1);
+    if (calMonth === 0) { setCalMonth(11); setCalYear((y) => y - 1); }
+    else setCalMonth((m) => m - 1);
   };
   
   const nextMonth = () => {
-    if (calMonth === 11) { setCalMonth(0); setCalYear((y) => y + 1); } else setCalMonth((m) => m + 1);
+    if (calMonth === 11) { setCalMonth(0); setCalYear((y) => y + 1); }
+    else setCalMonth((m) => m + 1);
   };
 
-  const renderField = (label, key, opts = {}) => {
-    const { placeholder = "", required = false, type = "text", rows } = opts;
-    const value = formData[key] || "";
+  const nextEvent = upcoming.length > 0 ? upcoming[0] : null;
+  const today = new Date();
+  const festivalsThisMonth = events.filter((ev) => {
+    if (!ev.startDate) return false;
+    const d = new Date(ev.startDate);
+    return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+  });
+
+  const renderField = (label, key, { required = false, type = "text", placeholder = "", rows = null } = {}) => {
+    const value = formData[key];
     const onChange = (e) => setFormData({ ...formData, [key]: e.target.value });
-    const cls = "w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm";
-    
+    const cls = "w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white";
+
     return (
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-1.5">{label} {required && <span className="text-red-500">*</span>}</label>
@@ -292,56 +301,59 @@ export default function AdminEventsPage() {
         <main>
           <div className="mb-6"><h1 className="text-3xl font-bold text-slate-900">Events & Calendar</h1></div>
 
-          <div className="flex items-center gap-3 mb-4">
-            <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Search by name or district..." />
-            <div className="relative">
-              <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none pr-9 text-sm">
-                <option value="ALL">All Categories</option>
-                {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-              <ChevronDown size={15} className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" />
+          <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center justify-between gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+              <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Search by name or district..." />
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-initial">
+                  <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none pr-8 text-sm">
+                    <option value="ALL">All Categories</option>
+                    {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2.5 top-3 text-slate-400 pointer-events-none" />
+                </div>
+                <div className="relative flex-1 sm:flex-initial">
+                  <select value={distFilter} onChange={(e) => setDistFilter(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none pr-8 text-sm">
+                    <option value="ALL">All Districts</option>
+                    {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2.5 top-3 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex bg-white rounded-lg border border-slate-200 p-0.5">
-              <button onClick={() => setView("CALENDAR")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${view === "CALENDAR" ? "bg-emerald-600 text-white" : "text-slate-600 hover:text-slate-900"}`}><Calendar size={15} /> Calendar</button>
-              <button onClick={() => setView("LIST")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${view === "LIST" ? "bg-emerald-600 text-white" : "text-slate-600 hover:text-slate-900"}`}><List size={15} /> List</button>
+            <div className="flex items-center justify-between sm:justify-end gap-2.5 flex-wrap">
+              <div className="flex bg-white rounded-xl border border-slate-200 p-1">
+                <button onClick={() => setView("CALENDAR")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${view === "CALENDAR" ? "bg-emerald-600 text-white" : "text-slate-600 hover:text-slate-900"}`}><Calendar size={14} /> Calendar</button>
+                <button onClick={() => setView("LIST")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${view === "LIST" ? "bg-emerald-600 text-white" : "text-slate-600 hover:text-slate-900"}`}><List size={14} /> List</button>
+              </div>
+              <button
+                onClick={() => downloadCsv("events.csv", [
+                  { label: "Title", value: (ev) => ev.title },
+                  { label: "Category", value: (ev) => ev.category },
+                  { label: "Region", value: (ev) => ev.region },
+                  { label: "Location", value: (ev) => ev.location },
+                  { label: "Start Date", value: (ev) => ev.startDate },
+                  { label: "End Date", value: (ev) => ev.endDate },
+                ], filtered)}
+                className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs font-semibold transition"
+              >
+                <Download size={14} /> Export
+              </button>
+              <button onClick={() => { setEditingId(null); setFormData(DEFAULT_FORM); setShowModal(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl flex items-center gap-1.5 text-xs font-semibold transition"><Plus size={16} /> Add Event</button>
             </div>
-            <div className="relative">
-              <select value={distFilter} onChange={(e) => setDistFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none pr-9 text-sm">
-                <option value="ALL">All Districts</option>
-                {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-              <ChevronDown size={15} className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" />
-            </div>
-            <div className="flex-1" />
-            <button
-              onClick={() => downloadCsv("events.csv", [
-                { label: "Title", value: (ev) => ev.title },
-                { label: "Category", value: (ev) => ev.category },
-                { label: "Region", value: (ev) => ev.region },
-                { label: "Location", value: (ev) => ev.location },
-                { label: "Start Date", value: (ev) => ev.startDate },
-                { label: "End Date", value: (ev) => ev.endDate },
-              ], filtered)}
-              className="border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition"
-            >
-              <Download size={16} /> Export CSV
-            </button>
-            <button onClick={() => { setEditingId(null); setFormData(DEFAULT_FORM); setShowModal(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition"><Plus size={18} /> Add New Event</button>
           </div>
 
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex justify-between">
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex justify-between">
               <span>{error}</span><button onClick={() => setError(null)}><X size={16} /></button>
             </div>
           )}
 
-          <div className="grid gap-4 md:grid-cols-4 mb-6">
-            <div className="bg-white rounded-2xl p-5 shadow-sm"><div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center mb-3"><span className="text-emerald-600 text-lg">📅</span></div><p className="text-2xl font-bold">{events.length}</p><p className="text-sm text-slate-500 mt-0.5">Total Events</p></div>
-            <div className="bg-white rounded-2xl p-5 shadow-sm"><div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center mb-3"><span className="text-amber-500 text-lg">⭐</span></div><p className="text-2xl font-bold">{upcoming.length}</p><p className="text-sm text-slate-500 mt-0.5">Upcoming Events</p>{nextEvent && <p className="text-xs text-amber-600 mt-2 font-medium truncate">Next: {nextEvent.title}, {MONTHS[new Date(nextEvent.startDate).getMonth()].slice(0, 3)} {new Date(nextEvent.startDate).getDate()}</p>}</div>
-            <div className="bg-white rounded-2xl p-5 shadow-sm"><div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center mb-3"><span className="text-purple-600 text-lg">🎉</span></div><p className="text-2xl font-bold">{festivalsThisMonth.length}</p><p className="text-sm text-slate-500 mt-0.5">Festivals This Month</p><p className="text-xs text-purple-600 mt-2 font-medium">{MONTHS[today.getMonth()]} {today.getFullYear()}</p></div>
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3 mb-6">
+            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm"><div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center mb-3"><span className="text-emerald-600 text-lg">📅</span></div><p className="text-2xl font-bold">{events.length}</p><p className="text-sm text-slate-500 mt-0.5">Total Events</p></div>
+            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm"><div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center mb-3"><span className="text-amber-500 text-lg">⭐</span></div><p className="text-2xl font-bold">{upcoming.length}</p><p className="text-sm text-slate-500 mt-0.5">Upcoming Events</p>{nextEvent && <p className="text-xs text-amber-600 mt-2 font-medium truncate">Next: {nextEvent.title}, {MONTHS[new Date(nextEvent.startDate).getMonth()].slice(0, 3)} {new Date(nextEvent.startDate).getDate()}</p>}</div>
+            <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm"><div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center mb-3"><span className="text-purple-600 text-lg">🎉</span></div><p className="text-2xl font-bold">{festivalsThisMonth.length}</p><p className="text-sm text-slate-500 mt-0.5">Festivals This Month</p><p className="text-xs text-purple-600 mt-2 font-medium">{MONTHS[today.getMonth()]} {today.getFullYear()}</p></div>
           </div>
 
           <div className="flex gap-5">
@@ -423,15 +435,15 @@ export default function AdminEventsPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-3 sm:p-4">
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-8 py-5 flex items-center justify-between z-10 rounded-t-3xl">
-              <h2 className="text-xl font-bold text-slate-900">{editingId ? "Edit Event" : "Add New Event"}</h2>
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between z-10 rounded-t-3xl">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">{editingId ? "Edit Event" : "Add New Event"}</h2>
               <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 p-1 transition"><X size={20} /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-8 space-y-5">
+            <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-4 sm:space-y-5">
               {renderField("Event Name", "name", { required: true, placeholder: "e.g., Galle Food Festival" })}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Category <span className="text-red-500">*</span></label>
                   <select required value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white">
@@ -447,7 +459,7 @@ export default function AdminEventsPage() {
                 </div>
               </div>
               {renderField("Location / Venue", "location", { required: true, placeholder: "e.g., Galle Fort" })}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {renderField("Start Date", "startDate", { required: true, type: "date" })}
                 {renderField("End Date", "endDate", { required: true, type: "date" })}
               </div>

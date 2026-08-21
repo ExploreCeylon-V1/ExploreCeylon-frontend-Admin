@@ -22,6 +22,7 @@ export default function AdminGuides() {
   const [loadingGuides, setLoadingGuides] = useState(false);
   const [guideListError, setGuideListError] = useState(null);
   
+  const [guideStats, setGuideStats] = useState(null);
   const [allGuideBookings, setAllGuideBookings] = useState([]);
   const [paymentSummaries, setPaymentSummaries] = useState([]);
   const [showPaymentsModal, setShowPaymentsModal] = useState(false);
@@ -78,8 +79,12 @@ export default function AdminGuides() {
       setPaymentError(null);
 
       try {
-        const guideData = await guideService.getAllGuides();
+        const [guideData, stats] = await Promise.all([
+          guideService.getAllGuides(),
+          guideService.getGuideStats(),
+        ]);
         setGuides(guideData.map(mapGuideToCardData));
+        if (stats) setGuideStats(stats);
       } catch (error) {
         setGuideListError(error.message || "Failed to load live guide data.");
       }
@@ -231,7 +236,14 @@ export default function AdminGuides() {
   };
 
   const bookedToday = useMemo(() => allGuideBookings.filter((b) => b.status === "CONFIRMED" && b.startDate <= today && b.endDate >= today).length, [allGuideBookings, today]);
-  const totalRevenue = useMemo(() => allGuideBookings.filter((b) => (b.status === "CONFIRMED" || b.status === "COMPLETED") && b.endDate < today).reduce((sum, b) => sum + b.totalCost * 0.15, 0), [allGuideBookings, today]);
+  const totalRevenue = useMemo(() => {
+    if (guideStats?.totalRevenue != null) {
+      return guideStats.totalRevenue;
+    }
+    return allGuideBookings
+      .filter((b) => b.status === "COMPLETED")
+      .reduce((sum, b) => sum + (Number(b.totalCost) || 0), 0);
+  }, [guideStats, allGuideBookings]);
 
   const handleOpenPaymentsModal = async () => {
     setShowPaymentsModal(true);
@@ -251,22 +263,18 @@ export default function AdminGuides() {
     }
   };
 
-  const handleMarkGuidePaid = async (guideId) => {
-    const summary = paymentSummaries.find((item) => item.guideId === guideId);
-    if (!summary || summary.paymentStatus === "PAID") return;
+  const handlePayGuide = async (guideId) => {
     setPaymentActionLoading(true);
-    setPaymentError(null);
     try {
-      const payload = {
-        guideId: summary.guideId, bookingIds: summary.bookingIds, totalEarned: summary.totalEarned,
-        commissionDeducted: summary.commissionDeducted, amountPaid: summary.amountPaid, paymentDate: today,
-      };
-      const createdPayment = await guideService.markGuideAsPaid(summary.guideId, payload);
-      setPaymentSummaries((prev) => prev.map((item) => item.guideId === summary.guideId ? { ...item, paymentStatus: "PAID", paymentDate: createdPayment.paymentDate, paymentRecordId: createdPayment.id } : item));
-      setFormSuccess("Guide payment recorded successfully.");
-      setTimeout(() => setFormSuccess(null), 2000);
+      await guideService.markGuideAsPaid(guideId, {
+        paymentDate: today,
+        amount: paymentSummaries.find((s) => s.guideId === guideId)?.unpaidAmount || 0,
+      });
+      await refreshPaymentSummaries();
+      setFormSuccess("Payment status updated successfully.");
+      setTimeout(() => setFormSuccess(null), 3000);
     } catch (error) {
-      setPaymentError(error.message || "Unable to mark guide as paid.");
+      setPaymentError(error.message || "Failed to update payment status.");
     } finally {
       setPaymentActionLoading(false);
     }
@@ -379,26 +387,26 @@ export default function AdminGuides() {
             </div>
           </header>
 
-          <section className="grid gap-4 md:grid-cols-4">
+          <section className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
             {[
               { label: "Total Guides", value: guides.length, icon: "👤", bgColor: "bg-blue-50" },
               { label: "Available", value: guides.filter(g => g.available).length, accent: "text-emerald-600", icon: "✅", bgColor: "bg-emerald-50" },
               { label: "Booked Today", value: bookedToday, accent: "text-rose-600", icon: "📅", bgColor: "bg-rose-50" },
-              { label: "Total Revenue", value: `$${Math.round(totalRevenue * 100) / 100}`, accent: "text-amber-600", icon: "💰", bgColor: "bg-amber-50", onClick: handleOpenPaymentsModal },
+              { label: "Total Revenue", value: `$${Math.round(totalRevenue).toLocaleString()}`, accent: "text-amber-600", icon: "💰", bgColor: "bg-amber-50", onClick: handleOpenPaymentsModal },
             ].map((item) => (
-              <div key={item.label} onClick={item.onClick} className={`rounded-3xl border border-slate-200 ${item.bgColor} p-5 shadow-sm transition hover:shadow-md ${item.onClick ? "cursor-pointer" : ""}`}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">{item.label}</p>
-                    <p className={`mt-4 text-3xl font-bold ${item.accent ?? "text-slate-950"}`}>{item.value}</p>
+              <div key={item.label} onClick={item.onClick} className={`rounded-3xl border border-slate-200 ${item.bgColor} p-4 sm:p-5 shadow-sm transition hover:shadow-md ${item.onClick ? "cursor-pointer" : ""}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-slate-500 truncate">{item.label}</p>
+                    <p className={`mt-2 sm:mt-4 text-xl sm:text-3xl font-bold truncate ${item.accent ?? "text-slate-950"}`}>{item.value}</p>
                   </div>
-                  <div className="text-3xl">{item.icon}</div>
+                  <div className="text-2xl sm:text-3xl shrink-0">{item.icon}</div>
                 </div>
               </div>
             ))}
           </section>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
               <div>
                 <p className="text-lg font-semibold text-slate-950">Guide list</p>
@@ -418,37 +426,37 @@ export default function AdminGuides() {
                 <div className="col-span-full rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center text-slate-600">No guides found.</div>
               ) : (
                 filteredGuides.map((guide) => (
-                  <article key={guide.id} onClick={() => handleViewGuideDetails(guide.id)} className="cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-lg hover:border-emerald-300">
-                    <div className="flex flex-col items-center gap-5 text-center">
+                  <article key={guide.id} onClick={() => handleViewGuideDetails(guide.id)} className="cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm transition hover:shadow-lg hover:border-emerald-300">
+                    <div className="flex flex-col items-center gap-4 sm:gap-5 text-center">
                       {/* ✅ FIX: show uploaded profile photo instead of emoji placeholder when available */}
                       {guide.photoUrl ? (
-                        <img src={guide.photoUrl} alt={guide.name} className="h-24 w-24 rounded-full object-cover border border-slate-200" />
+                        <img src={guide.photoUrl} alt={guide.name} className="h-20 sm:h-24 w-20 sm:w-24 rounded-full object-cover border border-slate-200" />
                       ) : (
-                        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 text-4xl">👤</div>
+                        <div className="flex h-20 sm:h-24 w-20 sm:w-24 items-center justify-center rounded-full bg-emerald-100 text-3xl sm:text-4xl">👤</div>
                       )}
-                      <div>
-                        <h2 className="text-xl font-semibold text-slate-950">{guide.name}</h2>
-                        <div className="mt-3 flex flex-wrap justify-center gap-2">
+                      <div className="w-full">
+                        <h2 className="text-lg sm:text-xl font-semibold text-slate-950 truncate">{guide.name}</h2>
+                        <div className="mt-2.5 flex flex-wrap justify-center gap-1.5 max-w-full">
                           {guide.specialties.map((spec) => (
-                            <span key={spec} className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">{spec}</span>
+                            <span key={spec} className="inline-block max-w-full truncate rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-emerald-700">{spec}</span>
                           ))}
                         </div>
                       </div>
                     </div>
-                    <div className="mt-6 space-y-3 text-sm text-slate-600">
-                      <div className="flex justify-between gap-3"><span className="font-semibold text-slate-800">Languages:</span><span>{guide.languages}</span></div>
-                      <div className="flex justify-between gap-3"><span className="font-semibold text-slate-800">District:</span><span>{guide.district}</span></div>
-                      <div className="flex justify-between gap-3"><span className="font-semibold text-slate-800">Rating:</span><span>⭐ {guide.rating.toFixed(1)} ({guide.reviews})</span></div>
-                      <div className="flex justify-between gap-3"><span className="font-semibold text-slate-800">Price:</span><span>${guide.price}/day</span></div>
+                    <div className="mt-5 space-y-2.5 text-xs sm:text-sm text-slate-600">
+                      <div className="flex justify-between gap-2"><span className="font-semibold text-slate-800">Languages:</span><span className="truncate">{guide.languages}</span></div>
+                      <div className="flex justify-between gap-2"><span className="font-semibold text-slate-800">District:</span><span className="truncate">{guide.district}</span></div>
+                      <div className="flex justify-between gap-2"><span className="font-semibold text-slate-800">Rating:</span><span>⭐ {guide.rating.toFixed(1)} ({guide.reviews})</span></div>
+                      <div className="flex justify-between gap-2"><span className="font-semibold text-slate-800">Price:</span><span>${guide.price}/day</span></div>
                     </div>
-                    <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${guide.available ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${guide.available ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
                         {guide.available ? "Available" : "Unavailable"}
                       </span>
-                      <div className="flex items-center gap-3">
-                        <button onClick={(e) => { e.stopPropagation(); handleEditGuide(guide.id); }} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 hover:bg-slate-200">✏️</button>
-                        <button onClick={(e) => { e.stopPropagation(); handleShowBookingsCalendar(guide.id, guide.name); }} className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 hover:bg-slate-200">📅</button>
-                        <button onClick={(e) => { e.stopPropagation(); handleToggleAvailability(guide.id, guide.available); }} className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${guide.available ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"}`}>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button onClick={(e) => { e.stopPropagation(); handleEditGuide(guide.id); }} className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-sm" title="Edit Guide">✏️</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleShowBookingsCalendar(guide.id, guide.name); }} className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-sm" title="Bookings Calendar">📅</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleToggleAvailability(guide.id, guide.available); }} className={`inline-flex h-9 w-9 items-center justify-center rounded-xl text-sm ${guide.available ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"}`} title="Toggle Availability">
                           {guide.available ? "⏻" : "✓"}
                         </button>
                       </div>
@@ -463,43 +471,43 @@ export default function AdminGuides() {
 
       {/* Guide Payments Modal */}
       {showPaymentsModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white p-6">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl flex flex-col">
+            <div className="sticky top-0 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 bg-white p-4 sm:p-6">
               <div>
-                <h2 className="text-2xl font-semibold text-slate-950">Guide Payments</h2>
-                <p className="mt-1 text-sm text-slate-500">Review completed bookings and mark payments as paid.</p>
+                <h2 className="text-xl sm:text-2xl font-semibold text-slate-950">Guide Payments</h2>
+                <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Review completed bookings and mark payments as paid.</p>
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => refreshPaymentSummaries()} className="rounded-2xl border bg-slate-50 px-4 py-2 text-sm font-medium hover:bg-slate-100">Refresh</button>
-                <button onClick={() => { setShowPaymentsModal(false); setPaymentError(null); }} className="rounded-2xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Close</button>
+              <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                <button onClick={() => refreshPaymentSummaries()} className="rounded-xl sm:rounded-2xl border bg-slate-50 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-medium hover:bg-slate-100">Refresh</button>
+                <button onClick={() => { setShowPaymentsModal(false); setPaymentError(null); }} className="rounded-xl sm:rounded-2xl bg-slate-950 px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-slate-800">Close</button>
               </div>
             </div>
-            <div className="overflow-y-auto p-6">
+            <div className="overflow-y-auto p-4 sm:p-6">
               {loadingPayments ? (
-                <div className="flex min-h-[240px] items-center justify-center">Loading payment summaries...</div>
+                <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-500">Loading payment summaries...</div>
               ) : paymentSummaries.length === 0 ? (
-                <div className="flex min-h-[240px] items-center justify-center text-slate-500">No guide payment summaries available.</div>
+                <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-500">No guide payment summaries available.</div>
               ) : (
                 <div className="space-y-4">
-                  {paymentError && <div className="rounded-3xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{paymentError}</div>}
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  {paymentError && <div className="rounded-2xl sm:rounded-3xl border border-rose-200 bg-rose-50 p-4 text-xs sm:text-sm text-rose-700">{paymentError}</div>}
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                     {paymentSummaries.map((summary) => (
-                      <div key={summary.guideId} className="rounded-3xl border border-slate-200 p-5 shadow-sm">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-lg font-semibold text-slate-950">{summary.guideName}</h3>
-                            <p className="text-sm text-slate-500">{summary.bookingIds.length} completed booking(s)</p>
+                      <div key={summary.guideId} className="rounded-2xl sm:rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="text-base sm:text-lg font-semibold text-slate-950 truncate">{summary.guideName}</h3>
+                            <p className="text-xs sm:text-sm text-slate-500">{summary.bookingIds.length} completed booking(s)</p>
                           </div>
-                          <span className={`rounded-2xl px-3 py-1 text-xs font-semibold ${summary.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{summary.paymentStatus}</span>
+                          <span className={`rounded-xl px-2.5 py-0.5 text-xs font-semibold shrink-0 ${summary.paymentStatus === "PAID" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{summary.paymentStatus}</span>
                         </div>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                          <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total Earned</p><p className="mt-2 text-lg font-semibold text-slate-950">${summary.totalEarned.toLocaleString()}</p></div>
-                          <div className="rounded-3xl bg-slate-50 p-4"><p className="text-xs uppercase tracking-[0.2em] text-slate-400">Amount Paid</p><p className="mt-2 text-lg font-semibold text-slate-950">${summary.amountPaid.toLocaleString()}</p></div>
+                        <div className="mt-4 grid gap-2.5 grid-cols-2">
+                          <div className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Total Earned</p><p className="mt-1 text-base sm:text-lg font-semibold text-slate-950">${summary.totalEarned.toLocaleString()}</p></div>
+                          <div className="rounded-2xl bg-slate-50 p-3"><p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Amount Paid</p><p className="mt-1 text-base sm:text-lg font-semibold text-slate-950">${summary.amountPaid.toLocaleString()}</p></div>
                         </div>
-                        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="text-sm text-slate-500">Commission: ${summary.commissionDeducted.toLocaleString()}</div>
-                          <button onClick={() => handleMarkGuidePaid(summary.guideId)} disabled={summary.paymentStatus === "PAID" || paymentActionLoading} className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60">
+                        <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between pt-3 border-t border-slate-100">
+                          <div className="text-xs sm:text-sm text-slate-500">Commission: ${summary.commissionDeducted.toLocaleString()}</div>
+                          <button onClick={() => handleMarkGuidePaid(summary.guideId)} disabled={summary.paymentStatus === "PAID" || paymentActionLoading} className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60">
                             {summary.paymentStatus === "PAID" ? "Paid" : "Mark Paid"}
                           </button>
                         </div>

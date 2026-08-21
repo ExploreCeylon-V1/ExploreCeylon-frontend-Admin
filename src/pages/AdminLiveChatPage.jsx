@@ -212,7 +212,7 @@ export default function AdminLiveChatPage() {
       {/* Split view */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left — conversation list */}
-        <div className="flex w-80 flex-shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white">
+        <div className={`w-full md:w-80 flex-shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white ${selected ? "hidden md:flex" : "flex"}`}>
           <div className="flex-shrink-0 border-b border-gray-100 p-3">
             <input
               type="text"
@@ -246,18 +246,23 @@ export default function AdminLiveChatPage() {
         </div>
 
         {/* Right — active thread */}
-        <div className="flex flex-1 flex-col overflow-hidden bg-white">
+        <div className={`flex-1 flex-col overflow-hidden bg-white ${selected ? "flex" : "hidden md:flex"}`}>
           {selected ? (
             <>
-              <div className="flex flex-shrink-0 items-center gap-3 border-b border-gray-100 p-5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1a5c2a] text-lg font-bold text-white">
-                  {selected.travelerName?.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900">{selected.travelerName}</p>
-                  <a href={`mailto:${selected.travelerEmail}`} className="text-xs text-[#1a5c2a] hover:underline">
-                    {selected.travelerEmail}
-                  </a>
+              <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 p-4 sm:p-5">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setSelectedId(null)} className="md:hidden text-xs font-semibold text-[#1a5c2a] hover:underline pr-2">
+                    ← Back
+                  </button>
+                  <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-[#1a5c2a] text-base sm:text-lg font-bold text-white shrink-0">
+                    {selected.travelerName?.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 text-xs sm:text-base truncate">{selected.travelerName}</p>
+                    <a href={`mailto:${selected.travelerEmail}`} className="text-[10px] sm:text-xs text-[#1a5c2a] hover:underline truncate block">
+                      {selected.travelerEmail}
+                    </a>
+                  </div>
                 </div>
               </div>
 

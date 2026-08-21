@@ -331,7 +331,10 @@ export default function AdminDestinations() {
                   </div>
                 ),
               },
-              { key: "district", label: "District", render: (dest) => dest.district },
+              {
+                key: "district", label: "District", hideOnMobile: true,
+                render: (dest) => <span className="text-slate-600 font-medium">{dest.district}</span>,
+              },
               {
                 key: "status", label: "Status",
                 render: (dest) => (
@@ -349,7 +352,7 @@ export default function AdminDestinations() {
                 ),
               },
               {
-                key: "featured", label: "Featured",
+                key: "featured", label: "Featured", hideOnTablet: true,
                 render: (dest) => (
                   <button
                     onClick={() => handleToggleFeatured(dest.id, dest.featured)}
@@ -360,7 +363,7 @@ export default function AdminDestinations() {
                 ),
               },
               {
-                key: "rating", label: "Rating",
+                key: "rating", label: "Rating", hideOnTablet: true,
                 render: (dest) => (
                   <div className="flex items-center gap-1">
                     <Star size={14} className="text-amber-400 fill-amber-400" />
@@ -384,15 +387,15 @@ export default function AdminDestinations() {
 
       {/* Add/Edit Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-3xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-8 py-6 flex items-center justify-between z-10">
-              <h2 className="text-2xl font-bold text-slate-900">{editingId ? "Edit Destination" : "Add Destination"}</h2>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl flex flex-col">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between z-10">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">{editingId ? "Edit Destination" : "Add Destination"}</h2>
               <button onClick={() => { setShowAddModal(false); setEditingId(null); }} className="text-slate-400 hover:text-slate-600 transition"><X size={24} /></button>
             </div>
 
-            <form onSubmit={handleAddDestination} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleAddDestination} className="p-5 sm:p-8 space-y-4 sm:space-y-6 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Destination Name *</label>
                   <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="e.g., Sigiriya Rock" />
@@ -403,7 +406,7 @@ export default function AdminDestinations() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Province *</label>
                   <input type="text" required value={formData.province} onChange={(e) => setFormData({ ...formData, province: e.target.value })} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="e.g., Central" />

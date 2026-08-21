@@ -206,13 +206,13 @@ export default function AdminUsers() {
     {
       key: "name", label: "User", sortable: true,
       render: (u) => (
-        <div>
-          <p className="font-medium text-slate-900">{u.name}</p>
-          <p className="text-xs text-slate-400">{u.email}</p>
+        <div className="min-w-0">
+          <p className="font-medium text-slate-900 text-xs sm:text-sm truncate">{u.name}</p>
+          <p className="text-xs text-slate-400 truncate">{u.email}</p>
         </div>
       ),
     },
-    { key: "phone", label: "Phone", render: (u) => u.phone || "—" },
+    { key: "phone", label: "Phone", hideOnMobile: true, render: (u) => u.phone || "—" },
     {
       key: "role", label: "Role", sortable: true,
       render: (u) => (
@@ -228,7 +228,7 @@ export default function AdminUsers() {
     },
     { key: "active", label: "Status", render: (u) => <StatusBadge value={u.active ? "ACTIVE" : "INACTIVE"} /> },
     {
-      key: "verification", label: "Verified",
+      key: "verification", label: "Verified", hideOnMobile: true,
       render: (u) => (
         <div className="flex gap-1">
           <StatusBadge value={u.emailVerified ? "VERIFIED" : "UNVERIFIED"} tone={u.emailVerified ? "green" : "slate"} />
@@ -236,18 +236,18 @@ export default function AdminUsers() {
         </div>
       ),
     },
-    { key: "tripCount", label: "Trips", render: (u) => u.tripCount },
-    { key: "bookings", label: "Bookings", render: (u) => u.vehicleBookingCount + u.guideBookingCount },
-    { key: "createdAt", label: "Joined", sortable: true, render: (u) => formatDate(u.createdAt) },
+    { key: "tripCount", label: "Trips", hideOnTablet: true, render: (u) => u.tripCount },
+    { key: "bookings", label: "Bookings", hideOnTablet: true, render: (u) => u.vehicleBookingCount + u.guideBookingCount },
+    { key: "createdAt", label: "Joined", hideOnTablet: true, sortable: true, render: (u) => formatDate(u.createdAt) },
     {
       key: "actions", label: "Actions",
       render: (u) => (
         <div className="flex items-center gap-1">
-          <button onClick={() => setDetailUser(u)} className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">View</button>
+          <button onClick={() => setDetailUser(u)} className="px-1.5 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">View</button>
           {u.active ? (
-            <button onClick={() => setPendingAction({ type: "deactivate", user: u })} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Deactivate</button>
+            <button onClick={() => setPendingAction({ type: "deactivate", user: u })} className="px-1.5 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Deactivate</button>
           ) : (
-            <button onClick={() => setPendingAction({ type: "activate", user: u })} className="px-2 py-1 text-xs text-emerald-600 hover:text-emerald-800 font-medium">Activate</button>
+            <button onClick={() => setPendingAction({ type: "activate", user: u })} className="px-1.5 py-1 text-xs text-emerald-600 hover:text-emerald-800 font-medium">Activate</button>
           )}
         </div>
       ),
@@ -269,42 +269,46 @@ export default function AdminUsers() {
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <div className="min-h-screen px-4 py-5 xl:px-10 xl:py-8">
         <main>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">User Management</h1>
-              <p className="text-sm text-slate-500 mt-1">{pageData.totalElements} registered travelers and admins</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">User Management</h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">{pageData.totalElements} registered travelers and admins</p>
             </div>
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-xl text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-60 self-start sm:self-auto"
             >
               <Download size={15} /> {exporting ? "Exporting…" : "Export CSV"}
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <SearchBar value={search} onChange={setSearch} placeholder="Search by name, email, or phone..." />
-            <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="ALL">All Roles</option>
-              <option value="TRAVELER">Traveler</option>
-              <option value="ADMIN">Admin</option>
-            </select>
-            <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="ALL">Active & Inactive</option>
-              <option value="ACTIVE">Active only</option>
-              <option value="INACTIVE">Inactive only</option>
-            </select>
-            <select value={emailVerifiedFilter} onChange={(e) => setEmailVerifiedFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="ALL">Email: Any</option>
-              <option value="VERIFIED">Email Verified</option>
-              <option value="UNVERIFIED">Email Unverified</option>
-            </select>
-            <select value={phoneVerifiedFilter} onChange={(e) => setPhoneVerifiedFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="ALL">Phone: Any</option>
-              <option value="VERIFIED">Phone Verified</option>
-              <option value="UNVERIFIED">Phone Unverified</option>
-            </select>
+          <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center justify-between gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+              <SearchBar value={search} onChange={setSearch} placeholder="Search by name, email, or phone..." />
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+                <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="ALL">All Roles</option>
+                  <option value="TRAVELER">Traveler</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+                <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="ALL">Active & Inactive</option>
+                  <option value="ACTIVE">Active only</option>
+                  <option value="INACTIVE">Inactive only</option>
+                </select>
+                <select value={emailVerifiedFilter} onChange={(e) => setEmailVerifiedFilter(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="ALL">Email: Any</option>
+                  <option value="VERIFIED">Email Verified</option>
+                  <option value="UNVERIFIED">Email Unverified</option>
+                </select>
+                <select value={phoneVerifiedFilter} onChange={(e) => setPhoneVerifiedFilter(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="ALL">Phone: Any</option>
+                  <option value="VERIFIED">Phone Verified</option>
+                  <option value="UNVERIFIED">Phone Unverified</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           {actionError && (

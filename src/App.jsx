@@ -14,6 +14,7 @@ import AdminContactPage from "./pages/AdminContactPage";
 import AdminLiveChatPage from "./pages/AdminLiveChatPage";
 import AdminUsers from "./pages/AdminUsers";
 import AdminBookings from "./pages/AdminBookings";
+import AdminPayments from "./pages/AdminPayments";
 import AdminReviews from "./pages/AdminReviews";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminMaintenance from "./pages/AdminMaintenance";
@@ -35,6 +36,7 @@ function App() {
               <Route path="/analytics" element={<AdminAnalytics />} />
               <Route path="/users" element={<AdminUsers />} />
               <Route path="/bookings" element={<AdminBookings />} />
+              <Route path="/payments" element={<AdminPayments />} />
               <Route path="/vehicles" element={<AdminVehicles />} />
               <Route path="/settings" element={<AdminSettings />} />
               <Route path="/events" element={<AdminEventsPage />} />

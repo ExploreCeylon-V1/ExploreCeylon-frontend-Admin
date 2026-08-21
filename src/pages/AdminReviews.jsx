@@ -197,17 +197,17 @@ export default function AdminReviews() {
 
   const columns = [
     { key: "entityType", label: "Entity", render: (r) => <EntityBadge type={r.entityType} /> },
-    { key: "entityName", label: "About", sortable: true, render: (r) => <span className="font-medium text-slate-900">{r.entityName}</span> },
-    { key: "reviewerName", label: "Reviewer", render: (r) => r.reviewerName },
+    { key: "entityName", label: "About", sortable: true, render: (r) => <span className="font-medium text-slate-900 text-xs sm:text-sm">{r.entityName}</span> },
+    { key: "reviewerName", label: "Reviewer", hideOnMobile: true, render: (r) => r.reviewerName },
     { key: "rating", label: "Rating", sortable: true, render: (r) => <Stars rating={r.rating} /> },
-    { key: "comment", label: "Comment", render: (r) => <span className="line-clamp-1 max-w-xs inline-block">{r.comment || "—"}</span> },
-    { key: "createdAt", label: "Date", sortable: true, render: (r) => formatDateTime(r.createdAt) },
+    { key: "comment", label: "Comment", hideOnMobile: true, render: (r) => <span className="line-clamp-1 max-w-xs inline-block text-xs text-slate-600">{r.comment || "—"}</span> },
+    { key: "createdAt", label: "Date", hideOnTablet: true, sortable: true, render: (r) => formatDateTime(r.createdAt) },
     {
       key: "actions", label: "Actions",
       render: (r) => (
         <div className="flex items-center gap-1">
-          <button onClick={() => setDetailReview(r)} className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">View</button>
-          <button onClick={() => setPendingDelete(r)} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Delete</button>
+          <button onClick={() => setDetailReview(r)} className="px-1.5 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">View</button>
+          <button onClick={() => setPendingDelete(r)} className="px-1.5 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Delete</button>
         </div>
       ),
     },
@@ -217,36 +217,42 @@ export default function AdminReviews() {
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <div className="min-h-screen px-4 py-5 xl:px-10 xl:py-8">
         <main>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Review Moderation</h1>
-              <p className="text-sm text-slate-500 mt-1">{pageData.totalElements} reviews across destinations, gems, guides & vehicles</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Review Moderation</h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">{pageData.totalElements} reviews across destinations, gems, guides & vehicles</p>
             </div>
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-slate-200 bg-white rounded-xl text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition disabled:opacity-60 self-start sm:self-auto"
             >
               <Download size={15} /> {exporting ? "Exporting…" : "Export CSV"}
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <SearchBar value={search} onChange={setSearch} placeholder="Search by name, reviewer, or comment..." />
-            <select value={entityFilter} onChange={(e) => setEntityFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="ALL">All Entities</option>
-              <option value="DESTINATION">Destinations</option>
-              <option value="GEM">Hidden Gems</option>
-              <option value="GUIDE">Guides</option>
-              <option value="VEHICLE">Vehicles</option>
-            </select>
-            <select value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)} className="px-4 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <option value="ALL">All Ratings</option>
-              {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} Star{n > 1 ? "s" : ""}</option>)}
-            </select>
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            <span className="text-slate-400 text-sm">to</span>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+          <div className="flex flex-col md:flex-row flex-wrap items-stretch md:items-center justify-between gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+              <SearchBar value={search} onChange={setSearch} placeholder="Search by name, reviewer, or comment..." />
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+                <select value={entityFilter} onChange={(e) => setEntityFilter(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="ALL">All Entities</option>
+                  <option value="DESTINATION">Destinations</option>
+                  <option value="GEM">Hidden Gems</option>
+                  <option value="GUIDE">Guides</option>
+                  <option value="VEHICLE">Vehicles</option>
+                </select>
+                <select value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                  <option value="ALL">All Ratings</option>
+                  {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} Star{n > 1 ? "s" : ""}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full sm:w-36 px-2.5 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                <span className="text-slate-400 text-xs sm:text-sm shrink-0">to</span>
+                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full sm:w-36 px-2.5 py-2 border border-slate-200 rounded-xl bg-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+            </div>
           </div>
 
           {actionError && (

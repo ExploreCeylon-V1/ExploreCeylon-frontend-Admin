@@ -61,3 +61,18 @@ export async function getCompletedBookingsWithPaymentStatus() {
 export async function markGuideAsPaid(guideId, payload) {
   return adminPost(`/api/v1/admin/guides/${guideId}/payments`, payload);
 }
+
+export async function getGuideStats() {
+  try {
+    return await adminGet("/api/v1/admin/stats/guides");
+  } catch (err) {
+    console.error("Failed to load guide stats:", err);
+    return {
+      totalGuides: 0,
+      availableGuides: 0,
+      bookedToday: 0,
+      totalRevenue: 0,
+      totalCommission: 0,
+    };
+  }
+}

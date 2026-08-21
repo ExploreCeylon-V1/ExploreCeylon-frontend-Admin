@@ -73,25 +73,25 @@ export default function AdminDashboard() {
         )}
 
         {/* Headline cards */}
-        <section className="grid gap-4 xl:grid-cols-4">
+        <section className="grid gap-3 sm:gap-4 grid-cols-2 xl:grid-cols-4">
           {[
             { title: "Registered Users", value: stats?.totalUsers ?? 0, icon: "👤" },
             { title: "Total Bookings", value: stats?.totalBookings ?? 0, icon: "📅" },
             { title: "Total Revenue", value: `$${(stats?.totalRevenue ?? 0).toLocaleString()}`, icon: "💰" },
             { title: "Active Trips", value: stats?.activeTrips ?? 0, icon: "📍" },
           ].map((card) => (
-            <article key={card.title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">{card.icon}</span>
-              <div className="mt-6">
-                <p className="text-3xl font-semibold text-slate-950">{loading ? "…" : card.value}</p>
-                <p className="mt-2 text-sm text-slate-500">{card.title}</p>
+            <article key={card.title} className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+              <span className="inline-flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-slate-900 text-white shadow-sm text-sm sm:text-base">{card.icon}</span>
+              <div className="mt-4 sm:mt-6">
+                <p className="text-xl sm:text-3xl font-semibold text-slate-950 truncate">{loading ? "…" : card.value}</p>
+                <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500 truncate">{card.title}</p>
               </div>
             </article>
           ))}
         </section>
 
         {/* Dense stat grid — every figure here is a real DB count, no placeholders */}
-        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        <section className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-3 xl:grid-cols-6">
           <StatTile icon="✅" label="Active Users" value={stats?.activeUsers} loading={loading} />
           <StatTile icon="🛡️" label="Verified Users" value={stats?.verifiedUsers} loading={loading} />
           <StatTile icon="🆕" label="New Users (30d)" value={stats?.newUsersLast30Days} loading={loading} />
@@ -108,23 +108,23 @@ export default function AdminDashboard() {
 
         <section className="grid gap-4 lg:grid-cols-3">
           {/* Recent Activity */}
-          <div className="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-950 mb-4">Recent Activity</h2>
+          <div className="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+            <h2 className="text-base sm:text-lg font-semibold text-slate-950 mb-4">Recent Activity</h2>
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">New Registrations</p>
                 <div className="space-y-2">
                   {(activity?.recentRegistrations ?? []).map((r) => (
-                    <div key={r.id} className="flex items-center justify-between text-sm">
-                      <div className="min-w-0">
+                    <div key={r.id} className="flex items-center justify-between text-xs sm:text-sm gap-2">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-slate-800 truncate">{r.name}</p>
-                        <p className="text-xs text-slate-400 truncate">{r.email}</p>
+                        <p className="text-[10px] sm:text-xs text-slate-400 truncate">{r.email}</p>
                       </div>
-                      <span className="text-xs text-slate-400 whitespace-nowrap ml-2">{timeAgo(r.createdAt)}</span>
+                      <span className="text-[10px] sm:text-xs text-slate-400 whitespace-nowrap shrink-0">{timeAgo(r.createdAt)}</span>
                     </div>
                   ))}
                   {!loading && (activity?.recentRegistrations ?? []).length === 0 && (
-                    <p className="text-sm text-slate-400">No registrations yet.</p>
+                    <p className="text-xs sm:text-sm text-slate-400">No registrations yet.</p>
                   )}
                 </div>
               </div>
@@ -132,16 +132,16 @@ export default function AdminDashboard() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">New Trips</p>
                 <div className="space-y-2">
                   {(activity?.recentTrips ?? []).map((t) => (
-                    <div key={t.id} className="flex items-center justify-between text-sm">
-                      <div className="min-w-0">
+                    <div key={t.id} className="flex items-center justify-between text-xs sm:text-sm gap-2">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-slate-800 truncate">{t.title}</p>
-                        <p className="text-xs text-slate-400 truncate">by {t.userName}</p>
+                        <p className="text-[10px] sm:text-xs text-slate-400 truncate">by {t.userName}</p>
                       </div>
-                      <span className="text-xs text-slate-400 whitespace-nowrap ml-2">{timeAgo(t.createdAt)}</span>
+                      <span className="text-[10px] sm:text-xs text-slate-400 whitespace-nowrap shrink-0">{timeAgo(t.createdAt)}</span>
                     </div>
                   ))}
                   {!loading && (activity?.recentTrips ?? []).length === 0 && (
-                    <p className="text-sm text-slate-400">No trips yet.</p>
+                    <p className="text-xs sm:text-sm text-slate-400">No trips yet.</p>
                   )}
                 </div>
               </div>
@@ -152,16 +152,16 @@ export default function AdminDashboard() {
                 </div>
                 <div className="space-y-2">
                   {(activity?.recentBookings ?? []).map((b) => (
-                    <div key={`${b.type}-${b.id}`} className="flex items-center justify-between text-sm">
-                      <div className="min-w-0">
+                    <div key={`${b.type}-${b.id}`} className="flex items-center justify-between text-xs sm:text-sm gap-2">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-slate-800 truncate">{b.customerName}</p>
-                        <p className="text-xs text-slate-400 truncate">{b.providerName}</p>
+                        <p className="text-[10px] sm:text-xs text-slate-400 truncate">{b.providerName}</p>
                       </div>
-                      <StatusBadge value={b.status} />
+                      <div className="shrink-0"><StatusBadge value={b.status} /></div>
                     </div>
                   ))}
                   {!loading && (activity?.recentBookings ?? []).length === 0 && (
-                    <p className="text-sm text-slate-400">No bookings yet.</p>
+                    <p className="text-xs sm:text-sm text-slate-400">No bookings yet.</p>
                   )}
                 </div>
               </div>
@@ -172,16 +172,16 @@ export default function AdminDashboard() {
                 </div>
                 <div className="space-y-2">
                   {(activity?.recentReviews ?? []).map((r) => (
-                    <div key={`${r.entityType}-${r.id}`} className="flex items-center justify-between text-sm">
-                      <div className="min-w-0">
+                    <div key={`${r.entityType}-${r.id}`} className="flex items-center justify-between text-xs sm:text-sm gap-2">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-slate-800 truncate">{r.entityName}</p>
-                        <p className="text-xs text-slate-400 truncate">{r.reviewerName} · {r.rating}★</p>
+                        <p className="text-[10px] sm:text-xs text-slate-400 truncate">{r.reviewerName} · {r.rating}★</p>
                       </div>
-                      <span className="text-xs text-slate-400 whitespace-nowrap ml-2">{timeAgo(r.createdAt)}</span>
+                      <span className="text-[10px] sm:text-xs text-slate-400 whitespace-nowrap shrink-0">{timeAgo(r.createdAt)}</span>
                     </div>
                   ))}
                   {!loading && (activity?.recentReviews ?? []).length === 0 && (
-                    <p className="text-sm text-slate-400">No reviews yet.</p>
+                    <p className="text-xs sm:text-sm text-slate-400">No reviews yet.</p>
                   )}
                 </div>
               </div>

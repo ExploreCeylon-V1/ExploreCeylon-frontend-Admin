@@ -67,29 +67,35 @@ export default function DataTable({
                   />
                 </th>
               )}
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  onClick={col.sortable ? () => onSort(col.key) : undefined}
-                  className={`px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${
-                    col.sortable ? "cursor-pointer select-none hover:text-slate-700" : ""
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    {col.label}
-                    {col.sortable && sortBy === col.key && (
-                      sortDir === "asc" ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                    )}
-                  </span>
-                </th>
-              ))}
+              {columns.map((col) => {
+                const isStickyAction = col.sticky || col.isActionColumn || col.key === "actions";
+                const hideClass = col.className || (col.hideOnMobile ? "hidden sm:table-cell" : (col.hideOnTablet ? "hidden md:table-cell" : ""));
+                const stickyClass = isStickyAction ? "sticky right-0 bg-slate-50 z-10 border-l border-slate-200/80" : "";
+
+                return (
+                  <th
+                    key={col.key}
+                    onClick={col.sortable ? () => onSort(col.key) : undefined}
+                    className={`px-3 sm:px-5 py-3 sm:py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${hideClass} ${stickyClass} ${
+                      col.sortable ? "cursor-pointer select-none hover:text-slate-700" : ""
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {col.label}
+                      {col.sortable && sortBy === col.key && (
+                        sortDir === "asc" ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                      )}
+                    </span>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((row) => (
-              <tr key={row[keyField]} className="hover:bg-slate-50 transition">
+              <tr key={row[keyField]} className="group hover:bg-slate-50 transition">
                 {selectable && (
-                  <td className="px-5 py-4">
+                  <td className="px-3 sm:px-5 py-3 sm:py-4">
                     <input
                       type="checkbox"
                       checked={selectedIds?.has(row[keyField]) ?? false}
@@ -98,11 +104,17 @@ export default function DataTable({
                     />
                   </td>
                 )}
-                {columns.map((col) => (
-                  <td key={col.key} className="px-5 py-4 text-sm text-slate-600">
-                    {col.render ? col.render(row) : row[col.key]}
-                  </td>
-                ))}
+                {columns.map((col) => {
+                  const isStickyAction = col.sticky || col.isActionColumn || col.key === "actions";
+                  const hideClass = col.className || (col.hideOnMobile ? "hidden sm:table-cell" : (col.hideOnTablet ? "hidden md:table-cell" : ""));
+                  const stickyClass = isStickyAction ? "sticky right-0 bg-white group-hover:bg-slate-50 z-10 border-l border-slate-100" : "";
+
+                  return (
+                    <td key={col.key} className={`px-3 sm:px-5 py-3 sm:py-4 text-sm text-slate-600 ${hideClass} ${stickyClass}`}>
+                      {col.render ? col.render(row) : row[col.key]}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

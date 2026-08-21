@@ -25,16 +25,16 @@ function ToastBanner({ toast, onClose }) {
 function SectionCard({ icon, title, subtitle, children }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+      <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
           {icon}
         </div>
         <div>
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
+          <h2 className="text-sm sm:text-base font-semibold text-slate-900">{title}</h2>
           {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
         </div>
       </div>
-      <div className="p-6">{children}</div>
+      <div className="p-4 sm:p-6">{children}</div>
     </div>
   );
 }
@@ -283,45 +283,45 @@ export default function AdminSettings() {
 
   return (
     <div className="min-h-screen bg-slate-100 mb-6">
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-5 sm:py-8 space-y-5 sm:space-y-6">
         {toast && <ToastBanner toast={toast} onClose={() => setToast(null)} />}
 
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage your admin profile and account security</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Settings</h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">Manage your admin profile and account security</p>
         </div>
 
         {/* ── Profile Picture ── */}
         <SectionCard icon={<Camera size={18} />} title="Profile Picture" subtitle="Upload a photo to personalise your admin account">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <div className="relative flex-shrink-0">
               {avatarPreview ? (
-                <img src={avatarPreview} alt="Profile preview" className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-200 shadow-sm" />
+                <img src={avatarPreview} alt="Profile preview" className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-emerald-200 shadow-sm" />
               ) : (
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white text-2xl font-bold shadow-sm">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white text-xl sm:text-2xl font-bold shadow-sm">
                   {initials}
                 </div>
               )}
             </div>
-            <div className="flex-1">
+            <div className="flex-1 w-full sm:w-auto">
               <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAvatarChange} className="hidden" />
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="flex-1 sm:flex-none px-4 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition text-center">
                   Choose Photo
                 </button>
                 {avatarFile && (
                   <>
-                    <button type="button" onClick={handleAvatarUpload} disabled={uploadingAvatar} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium transition disabled:opacity-60">
+                    <button type="button" onClick={handleAvatarUpload} disabled={uploadingAvatar} className="flex-1 sm:flex-none px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-medium transition disabled:opacity-60 text-center">
                       {uploadingAvatar ? "Uploading…" : "Save Photo"}
                     </button>
-                    <button type="button" onClick={removeAvatar} className="px-4 py-2 border border-red-200 text-red-500 hover:bg-red-50 rounded-xl text-sm font-medium transition">
+                    <button type="button" onClick={removeAvatar} className="flex-1 sm:flex-none px-4 py-2 border border-red-200 text-red-500 hover:bg-red-50 rounded-xl text-xs sm:text-sm font-medium transition text-center">
                       Remove
                     </button>
                   </>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-2">PNG, JPG or WebP · Max 5 MB</p>
-              {avatarFile && <p className="text-xs text-emerald-600 mt-1 font-medium">✓ {avatarFile.name} selected</p>}
+              <p className="text-[10px] sm:text-xs text-slate-400 mt-2">PNG, JPG or WebP · Max 5 MB</p>
+              {avatarFile && <p className="text-[10px] sm:text-xs text-emerald-600 mt-1 font-medium">✓ {avatarFile.name} selected</p>}
             </div>
           </div>
         </SectionCard>
@@ -333,7 +333,7 @@ export default function AdminSettings() {
             <Field label="Email Address" type="email" value={profile.email} onChange={() => {}} icon={<Mail size={15} />} readOnly hint="Email address cannot be changed. Contact a super admin if needed." />
             <Field label="Phone Number" type="tel" value={profile.phone} onChange={(v) => setProfile({ ...profile, phone: v })} placeholder="+94 77 000 0000" icon={<Phone size={15} />} />
             <div className="pt-2 flex justify-end">
-              <button type="submit" disabled={savingProfile} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition disabled:opacity-60 shadow-sm">
+              <button type="submit" disabled={savingProfile} className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition disabled:opacity-60 shadow-sm">
                 <Save size={15} /> {savingProfile ? "Saving…" : "Save Profile"}
               </button>
             </div>
@@ -355,7 +355,7 @@ export default function AdminSettings() {
               </p>
             )}
             <div className="pt-2 flex justify-end">
-              <button type="submit" disabled={savingPassword} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition disabled:opacity-60 shadow-sm">
+              <button type="submit" disabled={savingPassword} className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition disabled:opacity-60 shadow-sm">
                 <Lock size={15} /> {savingPassword ? "Updating…" : "Update Password"}
               </button>
             </div>
@@ -363,14 +363,14 @@ export default function AdminSettings() {
         </SectionCard>
 
         {/* ── Danger Zone ── */}
-        <div className="bg-white rounded-2xl border border-red-100 shadow-sm overflow-hidden ">
-          <div className="px-6 py-5 border-b border-red-100">
-            <h2 className="text-base font-semibold text-red-600">Danger Zone</h2>
+        <div className="bg-white rounded-2xl border border-red-100 shadow-sm overflow-hidden">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-red-100">
+            <h2 className="text-sm sm:text-base font-semibold text-red-600">Danger Zone</h2>
             <p className="text-xs text-slate-400 mt-0.5">Irreversible actions — proceed with caution</p>
           </div>
-          <div className="p-6 flex items-center justify-between">
+          <div className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-slate-800">Deactivate Admin Account</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-800">Deactivate Admin Account</p>
               <p className="text-xs text-slate-400 mt-0.5">This will revoke all admin access immediately</p>
             </div>
             <button
@@ -388,7 +388,7 @@ export default function AdminSettings() {
                   }
                 })();
               }}
-              className="px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition"
+              className="w-full sm:w-auto px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 rounded-xl text-xs sm:text-sm font-medium transition text-center"
             >
               Deactivate
             </button>
