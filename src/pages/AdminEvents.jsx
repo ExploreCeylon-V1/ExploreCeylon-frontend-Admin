@@ -396,7 +396,7 @@ export default function AdminEventsPage() {
                       key: "actions", label: "Actions",
                       render: (ev) => (
                         <div className="flex items-center gap-1">
-                          <button onClick={() => handleEdit(ev)} className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+                          <button onClick={() => handleEditClick(ev)} className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
                           <button onClick={() => setDeletingId(ev.id)} className="px-2 py-1 text-xs text-red-500 hover:text-red-700 font-medium">Del</button>
                         </div>
                       ),

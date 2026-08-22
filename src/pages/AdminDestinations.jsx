@@ -201,9 +201,10 @@ export default function AdminDestinations() {
     try {
       await destinationService.remove(id);
       setDeletingId(null);
-      loadDestinations();
-    } catch {
-      setError("Failed to delete destination");
+      await loadDestinations();
+    } catch (err) {
+      setDeletingId(null);
+      setError(err?.message || "Failed to delete destination");
     }
   };
 
