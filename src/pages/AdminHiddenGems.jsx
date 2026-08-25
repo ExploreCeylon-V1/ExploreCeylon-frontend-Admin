@@ -13,7 +13,12 @@ const DEFAULT_FORM = {
   tips: "", imageUrls: [], // ✅ FIX: array (backend field name එකට match)
 };
 
-const CATEGORIES = ["BEACH", "WATERFALL", "RUINS", "VIEWPOINT", "VILLAGE", "CAFE", "TEMPLE"];
+const CATEGORIES = [
+  // Existing categories
+  "BEACH", "WATERFALL", "RUINS", "VIEWPOINT", "VILLAGE", "CAFE", "TEMPLE",
+  // Unified 8-category set (Phase 1 additive)
+  "ADVENTURE", "CULTURE_HERITAGE", "RELIGIOUS", "WILDLIFE_NATURE", "BEACH_COAST", "HILL_COUNTRY", "SCENIC_VIEWS", "CITY_URBAN"
+];
 const ALL_FILTER = "ALL";
 
 // ─── Helper Components ────────────────────────────────────────────────────────
@@ -32,9 +37,10 @@ function ApprovalBadge({ approved }) {
 
 function CategoryBadge({ category }) {
   if(!category) return null;
+  const formatted = category.replace(/_/g, " ");
   return (
     <span className="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-      {category.charAt(0) + category.slice(1).toLowerCase()}
+      {formatted.charAt(0).toUpperCase() + formatted.slice(1).toLowerCase()}
     </span>
   );
 }
@@ -256,7 +262,10 @@ export default function AdminHiddenGems() {
             <div className="relative">
               <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="w-full sm:w-auto px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none pr-9 bg-white text-sm">
                 <option value={ALL_FILTER}>All Categories</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
+                {CATEGORIES.map((c) => {
+                  const label = c.replace(/_/g, " ");
+                  return <option key={c} value={c}>{label.charAt(0).toUpperCase() + label.slice(1).toLowerCase()}</option>;
+                })}
               </select>
               <ChevronDown size={15} className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" />
             </div>
@@ -367,7 +376,10 @@ export default function AdminHiddenGems() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Category <span className="text-red-500">*</span></label>
                   <select required value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white">
-                    {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
+                    {CATEGORIES.map((c) => {
+                      const label = c.replace(/_/g, " ");
+                      return <option key={c} value={c}>{label.charAt(0).toUpperCase() + label.slice(1).toLowerCase()}</option>;
+                    })}
                   </select>
                 </div>
               </div>
