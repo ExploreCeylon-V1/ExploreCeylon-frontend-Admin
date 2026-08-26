@@ -8,16 +8,20 @@ import ConfirmDialog from "../components/admin/ConfirmDialog";
 import { downloadCsv } from "../utils/csvExport";
 
 const DEFAULT_FORM = {
-  title: "", description: "", district: "", category: "BEACH",
+  title: "", description: "", district: "", category: "ADVENTURE",
   latitude: "", longitude: "", howToGetThere: "", bestTime: "",
   tips: "", imageUrls: [], // ✅ FIX: array (backend field name එකට match)
 };
 
 const CATEGORIES = [
-  // Existing categories
-  "BEACH", "WATERFALL", "RUINS", "VIEWPOINT", "VILLAGE", "CAFE", "TEMPLE",
-  // Unified 8-category set (Phase 1 additive)
-  "ADVENTURE", "CULTURE_HERITAGE", "RELIGIOUS", "WILDLIFE_NATURE", "BEACH_COAST", "HILL_COUNTRY", "SCENIC_VIEWS", "CITY_URBAN"
+  "ADVENTURE",
+  "CULTURE_HERITAGE",
+  "RELIGIOUS",
+  "WILDLIFE_NATURE",
+  "BEACH_COAST",
+  "HILL_COUNTRY",
+  "SCENIC_VIEWS",
+  "CITY_URBAN",
 ];
 const ALL_FILTER = "ALL";
 
@@ -168,7 +172,7 @@ export default function AdminHiddenGems() {
   const handleEdit = (gem) => {
     setFormData({
       title: gem.title || "", description: gem.description || "",
-      district: gem.district || "", category: gem.category || "BEACH",
+      district: gem.district || "", category: gem.category || "ADVENTURE",
       latitude: gem.latitude?.toString() || "", longitude: gem.longitude?.toString() || "",
       howToGetThere: gem.howToGetThere || "", bestTime: gem.bestTime || "",
       tips: gem.tips || "", imageUrls: gem.imageUrls || [], // ✅ FIX

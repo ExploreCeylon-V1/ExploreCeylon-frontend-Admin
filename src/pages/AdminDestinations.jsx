@@ -9,17 +9,21 @@ import { downloadCsv } from "../utils/csvExport";import * as destinationService 
 
 const DEFAULT_FORM = {
   name: "", shortDescription: "", description: "", district: "", province: "",
-  category: "BEACH", bestMonths: "", activities: "", latitude: "", longitude: "",
+  category: "ADVENTURE", bestMonths: "", activities: "", latitude: "", longitude: "",
   coverImageUrl: "", imageUrls: [], travelTimeFrom: "", entryFee: "", openingHours: "",
   featured: false, active: true, unescoStatus: "", nearbyGems: "",
 };
 
 const CATEGORIES = [
   "ALL",
-  // Existing categories
-  "BEACH", "CULTURAL", "WILDLIFE", "HILL", "SURF", "ADVENTURE", "HERITAGE", "RELIGIOUS", "CITY",
-  // Unified 8-category set (Phase 1 additive)
-  "CULTURE_HERITAGE", "WILDLIFE_NATURE", "BEACH_COAST", "HILL_COUNTRY", "SCENIC_VIEWS", "CITY_URBAN"
+  "ADVENTURE",
+  "CULTURE_HERITAGE",
+  "RELIGIOUS",
+  "WILDLIFE_NATURE",
+  "BEACH_COAST",
+  "HILL_COUNTRY",
+  "SCENIC_VIEWS",
+  "CITY_URBAN",
 ];
 
 // ✅ Active filter tabs
@@ -184,7 +188,7 @@ export default function AdminDestinations() {
       description: destination.description || "",
       district: destination.district || "",
       province: destination.province || "",
-      category: destination.category || "BEACH",
+      category: destination.category || "ADVENTURE",
       bestMonths: destination.bestMonths || "",
       activities: destination.activities || "",
       latitude: destination.latitude?.toString() || "",
