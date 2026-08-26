@@ -4,13 +4,14 @@ import { useAuth } from "../hooks/useAuth";
 import {
   ChevronDown, Menu, X, LogOut,
   LayoutDashboard, BarChart3, Users, CalendarCheck, CreditCard, Car, Compass,
-  MapPin, Gem, CalendarDays, Star, Settings, Mail, MessageCircle, Wrench,
+  MapPin, Gem, CalendarDays, Star, Settings, Mail, MessageCircle, Wrench, ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "Users", href: "/users", icon: Users },
+  { label: "ID Approvals", href: "/approvals", icon: ShieldCheck },
   { label: "Bookings", href: "/bookings", icon: CalendarCheck },
   { label: "Payments", href: "/payments", icon: CreditCard },
   { label: "Vehicles", href: "/vehicles", icon: Car },
