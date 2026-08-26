@@ -13,6 +13,7 @@ import AdminGuides from "./pages/AdminGuides";
 import AdminContactPage from "./pages/AdminContactPage";
 import AdminLiveChatPage from "./pages/AdminLiveChatPage";
 import AdminUsers from "./pages/AdminUsers";
+import AdminApprovals from "./pages/AdminApprovals";
 import AdminBookings from "./pages/AdminBookings";
 import AdminPayments from "./pages/AdminPayments";
 import AdminReviews from "./pages/AdminReviews";
@@ -35,6 +36,7 @@ function App() {
               <Route path="/" element={<AdminDashboard />} />
               <Route path="/analytics" element={<AdminAnalytics />} />
               <Route path="/users" element={<AdminUsers />} />
+              <Route path="/approvals" element={<AdminApprovals />} />
               <Route path="/bookings" element={<AdminBookings />} />
               <Route path="/payments" element={<AdminPayments />} />
               <Route path="/vehicles" element={<AdminVehicles />} />

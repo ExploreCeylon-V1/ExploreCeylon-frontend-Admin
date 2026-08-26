@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { X, ShieldCheck, ShieldOff, RotateCcw, Download } from "lucide-react";
 import * as adminUserService from "../services/adminUserService";
 import DataTable from "../components/admin/DataTable";
@@ -230,9 +231,13 @@ export default function AdminUsers() {
     {
       key: "verification", label: "Verified", hideOnMobile: true,
       render: (u) => (
-        <div className="flex gap-1">
-          <StatusBadge value={u.emailVerified ? "VERIFIED" : "UNVERIFIED"} tone={u.emailVerified ? "green" : "slate"} />
-          <StatusBadge value={u.phoneVerified ? "VERIFIED" : "UNVERIFIED"} tone={u.phoneVerified ? "green" : "slate"} />
+        <div className="flex flex-wrap gap-1">
+          <StatusBadge value={u.emailVerified ? "EMAIL" : "NO EMAIL"} tone={u.emailVerified ? "green" : "slate"} />
+          <StatusBadge value={u.phoneVerified ? "PHONE" : "NO PHONE"} tone={u.phoneVerified ? "green" : "slate"} />
+          <StatusBadge
+            value={u.kycStatus ? `ID: ${u.kycStatus}` : "ID: NONE"}
+            tone={u.kycStatus === "APPROVED" ? "green" : u.kycStatus === "PENDING" ? "amber" : u.kycStatus === "REJECTED" ? "red" : "slate"}
+          />
         </div>
       ),
     },
@@ -388,8 +393,34 @@ export default function AdminUsers() {
                 <div className="flex flex-wrap gap-2">
                   <StatusBadge value={detailUser.emailVerified ? "Email Verified" : "Email Unverified"} tone={detailUser.emailVerified ? "green" : "slate"} />
                   <StatusBadge value={detailUser.phoneVerified ? "Phone Verified" : "Phone Unverified"} tone={detailUser.phoneVerified ? "green" : "slate"} />
+                  <StatusBadge
+                    value={
+                      detailUser.kycStatus === "APPROVED"
+                        ? "ID Approved"
+                        : detailUser.kycStatus === "PENDING"
+                        ? "ID Pending Review"
+                        : detailUser.kycStatus === "REJECTED"
+                        ? "ID Rejected"
+                        : "ID Not Submitted"
+                    }
+                    tone={
+                      detailUser.kycStatus === "APPROVED"
+                        ? "green"
+                        : detailUser.kycStatus === "PENDING"
+                        ? "amber"
+                        : detailUser.kycStatus === "REJECTED"
+                        ? "red"
+                        : "slate"
+                    }
+                  />
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
+                  <Link
+                    to={`/approvals?search=${encodeURIComponent(detailUser.email)}`}
+                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-800 rounded-lg font-medium transition-colors"
+                  >
+                    <ShieldCheck size={13} /> View in ID Approvals →
+                  </Link>
                   {detailUser.emailVerified && (
                     <button onClick={() => setPendingAction({ type: "resetEmail", user: detailUser })} className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 font-medium">
                       <RotateCcw size={13} /> Reset Email Verification
