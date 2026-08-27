@@ -713,13 +713,29 @@ export default function AdminPayments() {
                             </span>
                             <span className="font-semibold text-slate-900">{detailData.providerName}</span>
                           </div>
+                          {detailData.bookingType === "VEHICLE" && (
+                            <div>
+                              <span className="text-slate-400 block text-[11px]">Driver Name</span>
+                              <span className="font-semibold text-slate-900">{detailData.driverName || detailData.providerDetails?.driverName || "—"}</span>
+                            </div>
+                          )}
                           <div>
-                            <span className="text-slate-400 block text-[11px]">District / Location</span>
-                            <span className="font-medium text-slate-900">{detailData.providerDistrict || "—"}</span>
+                            <span className="text-slate-400 block text-[11px]">Email Address</span>
+                            <span className="font-medium text-slate-900">{detailData.providerEmail || detailData.providerDetails?.email || "—"}</span>
                           </div>
                           <div>
                             <span className="text-slate-400 block text-[11px]">Contact Phone</span>
                             <span className="font-medium text-slate-900">{detailData.providerPhone || "—"}</span>
+                          </div>
+                          {detailData.bookingType === "VEHICLE" && (
+                            <div>
+                              <span className="text-slate-400 block text-[11px]">Vehicle Number (Plate)</span>
+                              <span className="font-semibold text-slate-900">{detailData.vehicleNumber || detailData.providerDetails?.licensePlate || "—"}</span>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-slate-400 block text-[11px]">District / Location</span>
+                            <span className="font-medium text-slate-900">{detailData.providerDistrict || "—"}</span>
                           </div>
                         </div>
                       </div>
@@ -730,7 +746,7 @@ export default function AdminPayments() {
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                         <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
                           <Calendar size={16} className="text-emerald-500" />
-                          Service Dates & Itinerary Link
+                          Booking Details
                         </div>
                         <StatusBadge value={detailData.bookingStatus} />
                       </div>
@@ -754,10 +770,40 @@ export default function AdminPayments() {
                         </div>
                       </div>
 
-                      {detailData.pickupLocation && (
-                        <div className="text-xs pt-1 border-t border-slate-100 text-slate-600">
-                          <span className="text-slate-400 block text-[11px]">Pickup Location</span>
-                          <span className="font-medium text-slate-900">{detailData.pickupLocation}</span>
+                      {/* Conditional Booking-Time Details based on Booking Type */}
+                      {detailData.bookingType === "VEHICLE" ? (
+                        <div className="pt-2 border-t border-slate-100 space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600">
+                            <div>
+                              <span className="text-slate-400 block text-[11px]">Pickup Location</span>
+                              <span className="font-medium text-slate-900">{detailData.pickupLocation || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block text-[11px]">Dropoff Location</span>
+                              <span className="font-medium text-slate-900">{detailData.dropoffLocation || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block text-[11px]">Pickup Time</span>
+                              <span className="font-medium text-slate-900">{detailData.pickupTime || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 block text-[11px]">Dropoff Time</span>
+                              <span className="font-medium text-slate-900">{detailData.dropoffTime || "—"}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[11px]">Special Requirements</span>
+                            <span className="font-medium text-slate-800 bg-slate-50 p-2 rounded-lg block border border-slate-100">
+                              {detailData.notes || "None specified"}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t border-slate-100 text-xs text-slate-600">
+                          <span className="text-slate-400 block text-[11px]">Special Requirements</span>
+                          <span className="font-medium text-slate-800 bg-slate-50 p-2 rounded-lg block border border-slate-100">
+                            {detailData.notes || "None specified"}
+                          </span>
                         </div>
                       )}
                     </div>
