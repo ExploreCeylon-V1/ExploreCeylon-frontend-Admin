@@ -84,6 +84,15 @@ export default function AdminApprovals() {
   // Approve Confirm Dialog
   const [confirmApprove, setConfirmApprove] = useState(false);
 
+  const handleSort = (key) => {
+    if (sortBy === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(key);
+      setSortDir("desc");
+    }
+  };
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -331,9 +340,15 @@ export default function AdminApprovals() {
           {/* Data Table */}
           <DataTable
             columns={columns}
-            data={pageData.content}
+            rows={pageData?.content || []}
             loading={loading}
-            emptyMessage="No verification submissions found matching criteria."
+            error={error}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSort={handleSort}
+            emptyIcon="🛡️"
+            emptyTitle="No verification submissions found"
+            emptySubtitle="No identity documents match the current filter or search criteria."
           />
 
           {/* Pagination */}
