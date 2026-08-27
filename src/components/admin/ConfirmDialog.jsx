@@ -32,11 +32,11 @@ export default function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full">
-        <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
-        {message && <p className="text-slate-500 text-sm mb-6">{message}</p>}
+      <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-7 max-w-sm w-full max-h-[90vh] overflow-y-auto">
+        <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-3">{title}</h3>
+        {message && <p className="text-slate-500 text-xs sm:text-sm mb-4 sm:mb-6">{message}</p>}
         {requirePassword && (
-          <div className="mb-6">
+          <div className="mb-5 sm:mb-6">
             {/* Decoy fields absorb the browser's saved-credential autofill (which otherwise
                 targets the nearest preceding text input on the page — e.g. a search box —
                 as "username" and this field as "password"). Off-screen, not display:none,
@@ -68,18 +68,18 @@ export default function ConfirmDialog({
             )}
           </div>
         )}
-        <div className="flex gap-3">
+        <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:gap-3">
           <button
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition text-sm font-medium disabled:opacity-60"
+            className="w-full sm:flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition text-xs sm:text-sm font-medium disabled:opacity-60"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
             disabled={confirmDisabled}
-            className={`flex-1 px-4 py-2.5 text-white rounded-xl transition text-sm font-medium disabled:opacity-60 ${confirmClasses}`}
+            className={`w-full sm:flex-1 px-4 py-2.5 text-white rounded-xl transition text-xs sm:text-sm font-medium disabled:opacity-60 ${confirmClasses}`}
           >
             {loading ? "Working…" : confirmLabel}
           </button>

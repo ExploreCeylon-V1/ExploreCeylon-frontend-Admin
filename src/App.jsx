@@ -13,10 +13,13 @@ import AdminGuides from "./pages/AdminGuides";
 import AdminContactPage from "./pages/AdminContactPage";
 import AdminLiveChatPage from "./pages/AdminLiveChatPage";
 import AdminUsers from "./pages/AdminUsers";
+import AdminApprovals from "./pages/AdminApprovals";
 import AdminBookings from "./pages/AdminBookings";
+import AdminPayments from "./pages/AdminPayments";
 import AdminReviews from "./pages/AdminReviews";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminMaintenance from "./pages/AdminMaintenance";
+import SubscribeEmails from "./pages/SubscribeEmails";
 
 function App() {
   return (
@@ -33,7 +36,9 @@ function App() {
               <Route path="/" element={<AdminDashboard />} />
               <Route path="/analytics" element={<AdminAnalytics />} />
               <Route path="/users" element={<AdminUsers />} />
+              <Route path="/approvals" element={<AdminApprovals />} />
               <Route path="/bookings" element={<AdminBookings />} />
+              <Route path="/payments" element={<AdminPayments />} />
               <Route path="/vehicles" element={<AdminVehicles />} />
               <Route path="/settings" element={<AdminSettings />} />
               <Route path="/events" element={<AdminEventsPage />} />
@@ -43,6 +48,7 @@ function App() {
               <Route path="/reviews" element={<AdminReviews />} />
               <Route path="/maintenance" element={<AdminMaintenance />} />
               <Route path="/contact" element={<AdminContactPage />} />
+              <Route path="/subscribe-emails" element={<SubscribeEmails />} />
               <Route path="/live-chat" element={<AdminLiveChatPage />} />
             </Route>
           </Route>

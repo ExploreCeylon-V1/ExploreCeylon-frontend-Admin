@@ -473,8 +473,8 @@ export default function AdminContactPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left — list */}
         <div
-          className="w-80 flex-shrink-0 bg-white border-r border-gray-200
-                        flex flex-col overflow-hidden"
+          className={`w-full md:w-80 flex-shrink-0 bg-white border-r border-gray-200
+                        flex-col overflow-hidden ${selected ? "hidden md:flex" : "flex"}`}
         >
           {/* Search */}
           <div className="p-3 border-b border-gray-100 flex-shrink-0">
@@ -519,15 +519,22 @@ export default function AdminContactPage() {
         </div>
 
         {/* Right — detail */}
-        <div className="flex-1 bg-white overflow-hidden flex flex-col">
+        <div className={`flex-1 bg-white overflow-hidden flex-col ${selected ? "flex" : "hidden md:flex"}`}>
           {selected ? (
-            <MessageDetail
-              msg={selected}
-              onReply={handleReply}
-              onDelete={handleDelete}
-              replying={replying}
-              deleting={deleting}
-            />
+            <>
+              <div className="md:hidden px-4 py-2 bg-gray-50 border-b border-gray-200 flex items-center">
+                <button onClick={() => setSelected(null)} className="text-xs font-semibold text-[#1a5c2a] hover:underline flex items-center gap-1">
+                  ← Back to messages
+                </button>
+              </div>
+              <MessageDetail
+                msg={selected}
+                onReply={handleReply}
+                onDelete={handleDelete}
+                replying={replying}
+                deleting={deleting}
+              />
+            </>
           ) : (
             <div
               className="flex flex-col items-center justify-center

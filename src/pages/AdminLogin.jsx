@@ -105,7 +105,7 @@ export default function AdminLogin() {
       </div>
 
       {/* ── RIGHT PANEL ── */}
-      <div className="flex flex-col items-center justify-center p-12 bg-[#f8f7f4]">
+      <div className="flex flex-col items-center justify-center p-6 sm:p-12 bg-[#f8f7f4]">
         <div className="w-full max-w-[400px]">
           <div className="mb-9">
             <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#059669]">Admin Portal</div>

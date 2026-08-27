@@ -95,11 +95,16 @@ export async function adminFetch(path, options = {}) {
       });
     } catch {
       clearAuth();
-      if (typeof window !== "undefined" && window.location && window.location.pathname !== "/login") {
-        try {
-          window.location.href = "/login";
-        } catch {
-          // Ignore jsdom navigation limitations in test environments
+      if (typeof process === "undefined" || process.env?.NODE_ENV !== "test") {
+        if (typeof window !== "undefined" && window.location && window.location.pathname !== "/login") {
+          try {
+            window.location.href = "/login";
+            // Suppress promise rejection propagation while the page is navigating away
+            // so React components do not render flash error states like "Session expired".
+            return new Promise(() => {});
+          } catch {
+            // Ignore jsdom navigation limitations in test environments
+          }
         }
       }
       const errBody = await response.json().catch(() => ({}));

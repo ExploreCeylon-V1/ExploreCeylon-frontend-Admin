@@ -3,15 +3,17 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import {
   ChevronDown, Menu, X, LogOut,
-  LayoutDashboard, BarChart3, Users, CalendarCheck, Car, Compass,
-  MapPin, Gem, CalendarDays, Star, Settings, Mail, MessageCircle, Wrench,
+  LayoutDashboard, BarChart3, Users, CalendarCheck, CreditCard, Car, Compass,
+  MapPin, Gem, CalendarDays, Star, Settings, Mail, MessageCircle, Wrench, ShieldCheck,
 } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "Users", href: "/users", icon: Users },
+  { label: "ID Approvals", href: "/approvals", icon: ShieldCheck },
   { label: "Bookings", href: "/bookings", icon: CalendarCheck },
+  { label: "Payments", href: "/payments", icon: CreditCard },
   { label: "Vehicles", href: "/vehicles", icon: Car },
   { label: "Tour Guides", href: "/guides", icon: Compass },
   { label: "Destinations", href: "/destinations", icon: MapPin },
@@ -21,6 +23,7 @@ const navItems = [
   { label: "Maintenance", href: "/maintenance", icon: Wrench },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Contact Messages", href: "/contact", icon: Mail },
+  { label: "Subscribe Emails", href: "/subscribe-emails", icon: Mail },
   { label: "Live Chat", href: "/live-chat", icon: MessageCircle },
 ];
 
@@ -121,15 +124,15 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* Desktop sidebar — fixed to the left edge */}
-      <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 md:w-64 bg-slate-900 border-r border-slate-700 shadow-lg z-40">
+      {/* Desktop sidebar — fixed to left edge on lg screens (>=1024px) */}
+      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 bg-slate-900 border-r border-slate-700 shadow-lg z-40">
         <Brand />
         <NavLinks isActive={isActive} />
         <UserMenu user={user} onLogout={handleLogout} />
       </aside>
 
-      {/* Mobile top bar with menu toggle */}
-      <div className="md:hidden sticky top-0 z-40 flex items-center justify-between bg-slate-900 border-b border-slate-700 px-4 h-14">
+      {/* Mobile & Tablet top bar with menu toggle (< 1024px) */}
+      <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between bg-slate-900 border-b border-slate-700 px-4 sm:px-6 h-14">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-lg font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">ExploreCeylon</span>
           <span className="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-semibold">ADMIN</span>
@@ -139,10 +142,10 @@ export default function AdminSidebar() {
         </button>
       </div>
 
-      {/* Mobile drawer — slides in from the left */}
+      {/* Mobile & Tablet drawer — slides in from left */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex justify-start">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+        <div className="lg:hidden fixed inset-0 z-50 flex justify-start">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-2xs" onClick={() => setMobileOpen(false)} />
           <aside className="relative w-72 max-w-[85vw] bg-slate-900 border-r border-slate-700 shadow-lg flex flex-col">
             <div className="flex items-center justify-between pr-3">
               <Brand />

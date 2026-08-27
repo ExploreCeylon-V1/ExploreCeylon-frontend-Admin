@@ -269,26 +269,26 @@ export default function AdminVehicles() {
         <main className="space-y-6">
           
           {/* Header */}
-          <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <header className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm shadow-slate-200/40">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h1 className="text-3xl font-semibold text-slate-950">Vehicle Management</h1>
+                <h1 className="text-2xl sm:text-3xl font-semibold text-slate-950">Vehicle Management</h1>
               </div>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <div className="relative w-full sm:w-[320px]">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex-1 min-w-0 sm:w-[280px]">
                   <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400">🔍</span>
                   <input
                     type="search"
                     placeholder="Search vehicles..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 text-slate-900 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-3xl border border-slate-200 bg-slate-50 py-2.5 sm:py-3 pl-11 pr-4 text-xs sm:text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                   />
                 </div>
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="h-12 rounded-3xl border border-slate-200 bg-white px-4 text-slate-900 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 cursor-pointer"
+                  className="h-10 sm:h-12 rounded-3xl border border-slate-200 bg-white px-4 text-xs sm:text-sm text-slate-900 shadow-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 cursor-pointer w-full sm:w-auto"
                 >
                   <option>All Types</option>
                   <option>TUKTUK</option>
@@ -315,24 +315,24 @@ export default function AdminVehicles() {
           )}
 
           {/* Stats Cards */}
-          <section className="grid gap-4 md:grid-cols-4">
+          <section className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
             {totals.map((item) => (
-              <div key={item.label} className={`rounded-3xl border border-slate-200 ${item.bgColor} p-5 shadow-sm shadow-slate-200/40 transition hover:shadow-md`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-500">{item.label}</p>
-                    <p className={`mt-4 text-3xl font-bold ${item.accent ?? "text-slate-950"}`}>
+              <div key={item.label} className={`rounded-3xl border border-slate-200 ${item.bgColor} p-4 sm:p-5 shadow-sm shadow-slate-200/40 transition hover:shadow-md`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-slate-500 truncate">{item.label}</p>
+                    <p className={`mt-2 sm:mt-4 text-xl sm:text-3xl font-bold truncate ${item.accent ?? "text-slate-950"}`}>
                       {loading ? <span className="animate-pulse">—</span> : item.value}
                     </p>
                   </div>
-                  <div className="text-3xl">{item.icon}</div>
+                  <div className="text-2xl sm:text-3xl shrink-0">{item.icon}</div>
                 </div>
               </div>
             ))}
           </section>
 
           {/* Vehicle List */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40">
+          <section className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm shadow-slate-200/40">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-lg font-semibold text-slate-950">Vehicle list</p>
@@ -363,7 +363,7 @@ export default function AdminVehicles() {
                     ),
                   },
                   { key: "type", label: "Type", render: (vehicle) => <span className="font-semibold">{vehicle.type}</span> },
-                  { key: "district", label: "District", render: (vehicle) => vehicle.district || "-" },
+                  { key: "district", label: "District", hideOnMobile: true, render: (vehicle) => vehicle.district || "-" },
                   {
                     key: "price", label: "Price/Day",
                     render: (vehicle) => (
@@ -372,7 +372,7 @@ export default function AdminVehicles() {
                       </span>
                     ),
                   },
-                  { key: "driver", label: "Driver", render: (vehicle) => vehicle.driverName || "-" },
+                  { key: "driver", label: "Driver", hideOnMobile: true, render: (vehicle) => vehicle.driverName || "-" },
                   {
                     key: "status", label: "Status",
                     render: (vehicle) => (
@@ -428,10 +428,10 @@ export default function AdminVehicles() {
 
       {/* Add/Edit Vehicle Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto py-10 px-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full my-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-slate-950">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl flex flex-col">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white p-4 sm:p-6">
+              <h2 className="text-xl sm:text-2xl font-semibold text-slate-950">
                 {editingVehicle ? "Edit Vehicle" : "Add New Vehicle"}
               </h2>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl leading-none">
@@ -439,14 +439,14 @@ export default function AdminVehicles() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5 flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle Name *</label>
                   <input
                     type="text" required value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="e.g., Toyota Prius"
                   />
                 </div>
@@ -456,7 +456,7 @@ export default function AdminVehicles() {
                   <select
                     required value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 bg-white"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 bg-white text-sm"
                   >
                     {VEHICLE_TYPES.map((type) => (
                       <option key={type} value={type}>{type}</option>
@@ -469,7 +469,7 @@ export default function AdminVehicles() {
                   <input
                     type="text" value={formData.brand}
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="e.g., Toyota"
                   />
                 </div>
@@ -479,7 +479,7 @@ export default function AdminVehicles() {
                   <input
                     type="text" value={formData.model}
                     onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="e.g., Prius"
                   />
                 </div>
@@ -488,7 +488,7 @@ export default function AdminVehicles() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Year</label>
                   <input type="text" value={formData.year} 
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })} 
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100" 
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm" 
                     placeholder="e.g., 2020" 
                   />
                 </div>
@@ -498,7 +498,7 @@ export default function AdminVehicles() {
                     <input
                         type="text" value={formData.color}
                         onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                        className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                         placeholder="e.g., Red"
                     />
                 </div>
@@ -508,7 +508,7 @@ export default function AdminVehicles() {
                   <input
                     type="number" value={formData.seats}
                     onChange={(e) => setFormData({ ...formData, seats: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="e.g., 4"
                   />
                 </div>
@@ -518,7 +518,7 @@ export default function AdminVehicles() {
                   <input
                     type="number" required step="0.01" value={formData.pricePerDay}
                     onChange={(e) => setFormData({ ...formData, pricePerDay: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="e.g., 50"
                   />
                 </div>
@@ -528,7 +528,7 @@ export default function AdminVehicles() {
                   <select
                     required value={formData.district}
                     onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 bg-white"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 bg-white text-sm"
                   >
                     {SRI_LANKA_DISTRICTS.map((district) => (
                       <option key={district} value={district}>{district}</option>
@@ -541,7 +541,7 @@ export default function AdminVehicles() {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 bg-white"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 bg-white text-sm"
                   >
                     {VEHICLE_CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -549,13 +549,13 @@ export default function AdminVehicles() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:col-span-2">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Latitude</label>
                     <input
                       type="number" step="any" value={formData.latitude}
                       onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                       placeholder="e.g., 6.9271"
                     />
                   </div>
@@ -564,7 +564,7 @@ export default function AdminVehicles() {
                     <input
                       type="number" step="any" value={formData.longitude}
                       onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                      className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                       placeholder="e.g., 79.8612"
                     />
                   </div>
@@ -575,7 +575,7 @@ export default function AdminVehicles() {
                   <input
                     type="text" value={formData.pickupLocation}
                     onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="e.g., Colombo Airport"
                   />
                 </div>
@@ -585,7 +585,7 @@ export default function AdminVehicles() {
                   <input
                     type="text" value={formData.driverName}
                     onChange={(e) => setFormData({ ...formData, driverName: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="Driver name"
                   />
                 </div>
@@ -595,7 +595,7 @@ export default function AdminVehicles() {
                   <input
                     type="tel" value={formData.driverPhone}
                     onChange={(e) => setFormData({ ...formData, driverPhone: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="+94..."
                   />
                 </div>
@@ -605,8 +605,8 @@ export default function AdminVehicles() {
                   <input
                     type="tel" value={formData.whatsappNumber}
                     onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                    placeholder="94771234567 (no + or spaces)"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
+                    placeholder="94771234567"
                   />
                 </div>
 
@@ -615,33 +615,33 @@ export default function AdminVehicles() {
                   <input
                     type="text" value={formData.licensePlate}
                     onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="e.g., ABC-123"
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="col-span-full md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Driver Languages</label>
                   <input
                     type="text" value={formData.driverLanguages}
                     onChange={(e) => setFormData({ ...formData, driverLanguages: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="e.g., English, Sinhala"
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="col-span-full md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="Vehicle details..."
                     rows="3"
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="col-span-full md:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Vehicle Images</label>
 
                   <label className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-300 py-6 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition text-sm ${uploadingImages ? "pointer-events-none opacity-70" : ""}`}>
@@ -653,7 +653,7 @@ export default function AdminVehicles() {
                     ) : (
                       <>
                         <UploadCloud size={20} className="text-slate-400" />
-                        <span className="text-slate-500">Click to upload images (multiple allowed — JPG, PNG, WEBP, max 5MB each)</span>
+                        <span className="text-slate-500 text-center px-4">Click to upload images (multiple allowed — JPG, PNG, WEBP, max 5MB each)</span>
                       </>
                     )}
                     <input
@@ -684,7 +684,7 @@ export default function AdminVehicles() {
                   )}
                 </div>
 
-                <div className="md:col-span-2 flex flex-wrap gap-6 pt-2">
+                <div className="col-span-full md:col-span-2 flex flex-wrap gap-6 pt-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox" checked={formData.driverIncluded}
@@ -703,8 +703,7 @@ export default function AdminVehicles() {
                   </label>
                 </div>
               </div>
-
-              <div className="flex gap-3 pt-6 mt-4 border-t border-slate-200">
+              <div className="sticky bottom-0 z-10 flex gap-3 pt-4 border-t border-slate-200 bg-white p-4 sm:p-6 mt-auto">
                 <button
                   type="button" onClick={() => setShowModal(false)}
                   className="flex-1 rounded-2xl border border-slate-200 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"

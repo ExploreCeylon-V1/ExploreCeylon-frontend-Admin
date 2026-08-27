@@ -8,8 +8,8 @@ export default function Pagination({ page, totalPages, totalElements, size, onPa
   const to = Math.min((page + 1) * size, totalElements);
 
   return (
-    <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 text-sm text-slate-500">
-      <span>
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-5 py-3 border-t border-slate-100 text-xs sm:text-sm text-slate-500">
+      <span className="text-center sm:text-left">
         Showing <span className="font-medium text-slate-700">{from}-{to}</span> of{" "}
         <span className="font-medium text-slate-700">{totalElements}</span>
       </span>

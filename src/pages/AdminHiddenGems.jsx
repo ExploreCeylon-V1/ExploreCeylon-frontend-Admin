@@ -8,12 +8,21 @@ import ConfirmDialog from "../components/admin/ConfirmDialog";
 import { downloadCsv } from "../utils/csvExport";
 
 const DEFAULT_FORM = {
-  title: "", description: "", district: "", category: "BEACH",
+  title: "", description: "", district: "", category: "ADVENTURE",
   latitude: "", longitude: "", howToGetThere: "", bestTime: "",
   tips: "", imageUrls: [], // ✅ FIX: array (backend field name එකට match)
 };
 
-const CATEGORIES = ["BEACH", "WATERFALL", "RUINS", "VIEWPOINT", "VILLAGE", "CAFE", "TEMPLE"];
+const CATEGORIES = [
+  "ADVENTURE",
+  "CULTURE_HERITAGE",
+  "RELIGIOUS",
+  "WILDLIFE_NATURE",
+  "BEACH_COAST",
+  "HILL_COUNTRY",
+  "SCENIC_VIEWS",
+  "CITY_URBAN",
+];
 const ALL_FILTER = "ALL";
 
 // ─── Helper Components ────────────────────────────────────────────────────────
@@ -32,9 +41,10 @@ function ApprovalBadge({ approved }) {
 
 function CategoryBadge({ category }) {
   if(!category) return null;
+  const formatted = category.replace(/_/g, " ");
   return (
     <span className="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-      {category.charAt(0) + category.slice(1).toLowerCase()}
+      {formatted.charAt(0).toUpperCase() + formatted.slice(1).toLowerCase()}
     </span>
   );
 }
@@ -162,7 +172,7 @@ export default function AdminHiddenGems() {
   const handleEdit = (gem) => {
     setFormData({
       title: gem.title || "", description: gem.description || "",
-      district: gem.district || "", category: gem.category || "BEACH",
+      district: gem.district || "", category: gem.category || "ADVENTURE",
       latitude: gem.latitude?.toString() || "", longitude: gem.longitude?.toString() || "",
       howToGetThere: gem.howToGetThere || "", bestTime: gem.bestTime || "",
       tips: gem.tips || "", imageUrls: gem.imageUrls || [], // ✅ FIX
@@ -256,7 +266,10 @@ export default function AdminHiddenGems() {
             <div className="relative">
               <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="w-full sm:w-auto px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none pr-9 bg-white text-sm">
                 <option value={ALL_FILTER}>All Categories</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
+                {CATEGORIES.map((c) => {
+                  const label = c.replace(/_/g, " ");
+                  return <option key={c} value={c}>{label.charAt(0).toUpperCase() + label.slice(1).toLowerCase()}</option>;
+                })}
               </select>
               <ChevronDown size={15} className="absolute right-3 top-2.5 text-slate-400 pointer-events-none" />
             </div>
@@ -331,10 +344,10 @@ export default function AdminHiddenGems() {
                 ),
               },
               { key: "category", label: "Category", render: (gem) => <CategoryBadge category={gem.category} /> },
-              { key: "district", label: "District", render: (gem) => gem.district },
-              { key: "rating", label: "Rating", render: (gem) => <RatingDisplay rating={gem.rating} /> },
+              { key: "district", label: "District", hideOnMobile: true, render: (gem) => gem.district },
+              { key: "rating", label: "Rating", hideOnMobile: true, render: (gem) => <RatingDisplay rating={gem.rating} /> },
               { key: "approval", label: "Approval Status", render: (gem) => <ApprovalBadge approved={gem.approved} /> },
-              { key: "created", label: "Created", render: (gem) => new Date(gem.createdAt).toLocaleDateString() },
+              { key: "created", label: "Created", hideOnTablet: true, render: (gem) => new Date(gem.createdAt).toLocaleDateString() },
               {
                 key: "actions", label: "Actions",
                 render: (gem) => (
@@ -354,29 +367,32 @@ export default function AdminHiddenGems() {
 
       {/* ── Add/Edit Modal ── */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-8 py-5 flex items-center justify-between z-10 rounded-t-3xl">
-              <h2 className="text-xl font-bold text-slate-900">{editingId ? "Edit Hidden Gem" : "Add Hidden Gem"}</h2>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl flex flex-col">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between z-10 rounded-t-3xl">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">{editingId ? "Edit Hidden Gem" : "Add Hidden Gem"}</h2>
               <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 transition p-1"><X size={20} /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-8 space-y-5">
+            <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
               {field("Gem Title", "title", { required: true, placeholder: "e.g., Secret Waterfall" })}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {field("District", "district", { required: true, placeholder: "e.g., Colombo" })}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Category <span className="text-red-500">*</span></label>
                   <select required value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white">
-                    {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
+                    {CATEGORIES.map((c) => {
+                      const label = c.replace(/_/g, " ");
+                      return <option key={c} value={c}>{label.charAt(0).toUpperCase() + label.slice(1).toLowerCase()}</option>;
+                    })}
                   </select>
                 </div>
               </div>
               {field("Full Description", "description", { required: true, placeholder: "Detailed description of the gem", rows: 4 })}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {field("Latitude", "latitude", { required: true, type: "number", placeholder: "e.g., 6.9497" })}
                 {field("Longitude", "longitude", { required: true, type: "number", placeholder: "e.g., 80.7891" })}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {field("Best Time to Visit", "bestTime", { placeholder: "e.g., January – March" })}
                 {field("How to Get There", "howToGetThere", { placeholder: "e.g., Boat from Unawatuna (10 min)" })}
               </div>
@@ -395,7 +411,7 @@ export default function AdminHiddenGems() {
                   ) : (
                     <>
                       <UploadCloud size={20} className="text-slate-400" />
-                      <span className="text-slate-500">Click to upload images (multiple allowed — JPG, PNG, WEBP, max 5MB each)</span>
+                      <span className="text-slate-500 text-center px-4">Click to upload images (multiple allowed — JPG, PNG, WEBP, max 5MB each)</span>
                     </>
                   )}
                   <input
@@ -426,7 +442,7 @@ export default function AdminHiddenGems() {
                 )}
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="sticky bottom-0 z-10 flex gap-3 pt-4 border-t border-slate-200 bg-white p-4 sm:p-6 mt-auto">
                 <button type="button" onClick={closeModal} className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition text-sm font-medium">Cancel</button>
                 <button type="submit" disabled={submitting || uploadingImages} className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition text-sm font-medium disabled:opacity-60">{submitting ? "Saving…" : editingId ? "Update Gem" : "Create Gem"}</button>
               </div>

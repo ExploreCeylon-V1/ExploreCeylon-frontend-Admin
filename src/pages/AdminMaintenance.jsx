@@ -128,23 +128,23 @@ export default function AdminMaintenance() {
         )}
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
               <Wrench size={18} />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-slate-900">Site Status</h2>
+              <h2 className="text-sm sm:text-base font-semibold text-slate-900">Site Status</h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 Controls whether ExploreCeylon-frontend-web shows the normal site or a maintenance message
               </p>
             </div>
           </div>
 
-          <form onSubmit={handleSave} className="p-6 space-y-5">
+          <form onSubmit={handleSave} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-800">Maintenance Mode</p>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs sm:text-sm font-medium text-slate-800">Maintenance Mode</p>
+                <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
                   {form.active ? "Site is offline to travelers" : "Site is live"}
                 </p>
               </div>
@@ -186,11 +186,11 @@ export default function AdminMaintenance() {
               </p>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="pt-2 flex flex-col sm:flex-row sm:justify-end">
               <button
                 type="submit"
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition disabled:opacity-60 shadow-sm"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition disabled:opacity-60 shadow-sm"
               >
                 <Save size={15} /> {saving ? "Saving…" : "Save Changes"}
               </button>
