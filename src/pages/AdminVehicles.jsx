@@ -102,7 +102,7 @@ export default function AdminVehicles() {
     setFormData({
       name: "", type: "CAR", brand: "", model: "", year: "", seats: "",
       color: "", latitude: "", longitude: "", imageUrls: [], licensePlate: "", pricePerDay: "", currency: "USD",
-      district: "Colombo", pickupLocation: "", driverName: "", driverPhone: "", whatsappNumber: "",
+      district: "Colombo", pickupLocation: "", driverName: "", driverPhone: "", whatsappNumber: "", email: "",
       driverLanguages: "", driverIncluded: false,
       available: true, description: "", category: "STANDARD",
     });
@@ -155,6 +155,7 @@ export default function AdminVehicles() {
       driverName: vehicle.driverName || "",
       driverPhone: vehicle.driverPhone || "",
       whatsappNumber: vehicle.whatsappNumber || "",
+      email: vehicle.email || "",
       driverLanguages: vehicle.driverLanguages || "",
       driverIncluded: vehicle.driverIncluded || false,
       available: vehicle.available !== false,
@@ -607,6 +608,16 @@ export default function AdminVehicles() {
                     onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
                     className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
                     placeholder="94771234567"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Provider/Driver Email</label>
+                  <input
+                    type="email" value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-2.5 text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 text-sm"
+                    placeholder="driver@example.com"
                   />
                 </div>
 
