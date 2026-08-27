@@ -77,7 +77,7 @@ export default function AdminDashboard() {
           {[
             { title: "Registered Users", value: stats?.totalUsers ?? 0, icon: "👤" },
             { title: "Total Bookings", value: stats?.totalBookings ?? 0, icon: "📅" },
-            { title: "Total Revenue", value: `$${(stats?.totalRevenue ?? 0).toLocaleString()}`, icon: "💰" },
+            { title: "Total Revenue", value: `$${Math.round(stats?.totalRevenue ?? 0).toLocaleString()}`, icon: "💰" },
             { title: "Active Trips", value: stats?.activeTrips ?? 0, icon: "📍" },
           ].map((card) => (
             <article key={card.title} className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
