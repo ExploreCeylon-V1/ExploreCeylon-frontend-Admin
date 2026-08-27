@@ -9,12 +9,14 @@ import EmptyState from "./EmptyState";
 export default function DataTable({
   columns,
   rows,
+  data,
   keyField = "id",
   loading,
   error,
   emptyIcon,
   emptyTitle = "Nothing found",
   emptySubtitle,
+  emptyMessage,
   sortBy,
   sortDir,
   onSort,
@@ -23,6 +25,8 @@ export default function DataTable({
   onToggleRow,
   onToggleAll,
 }) {
+  const actualRows = rows || data || [];
+
   if (loading) {
     return (
       <div className="bg-white rounded-3xl p-12 flex items-center justify-center shadow-sm">
@@ -41,15 +45,15 @@ export default function DataTable({
     );
   }
 
-  if (!rows || rows.length === 0) {
+  if (!actualRows || actualRows.length === 0) {
     return (
       <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-        <EmptyState icon={emptyIcon} title={emptyTitle} subtitle={emptySubtitle} />
+        <EmptyState icon={emptyIcon} title={emptyTitle} subtitle={emptySubtitle || emptyMessage} />
       </div>
     );
   }
 
-  const allSelected = selectable && rows.length > 0 && rows.every((r) => selectedIds?.has(r[keyField]));
+  const allSelected = selectable && actualRows.length > 0 && actualRows.every((r) => selectedIds?.has(r[keyField]));
 
   return (
     <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
@@ -92,7 +96,7 @@ export default function DataTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {rows.map((row) => (
+            {actualRows.map((row) => (
               <tr key={row[keyField]} className="group hover:bg-slate-50 transition">
                 {selectable && (
                   <td className="px-3 sm:px-5 py-3 sm:py-4">
